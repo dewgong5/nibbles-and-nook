@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Nibbles & Nook",
-  description: "Welcome to Nibbles & nOOk — order food",
+  description: "Welcome to Nibbles & Nook — order food",
 };
 
 export default function RootLayout({
