@@ -106,11 +106,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const totalPrice = Object.entries(quantities)
+      .filter(([id]) => id in ITEM_PRICE_CENTS)
+      .reduce((sum, [id, qty]) => sum + qty * ITEM_PRICE_CENTS[id], 0);
+
     const { error: orderError } = await supabase.from("orders").insert({
       id: orderId,
       customer_name: personal.name.trim(),
       customer_email: personal.email.trim().toLowerCase(),
       customer_phone: personal.phone.trim(),
+      qty_nasi_bakar_3_rasa: quantities["nasi-bakar-3-rasa"] ?? 0,
+      qty_cendol: quantities["cendol"] ?? 0,
+      qty_nasi_bakar_and_cendol: quantities["nasi-bakar-and-cendol"] ?? 0,
+      qty_nasi_ulam_betawi: quantities["nasi-ulam-betawi"] ?? 0,
+      total_price: totalPrice,
       proof_original_filename: originalFilename.slice(0, 512),
       proof_file_path: storagePath,
     });
@@ -122,25 +131,6 @@ export async function POST(req: NextRequest) {
         { error: "Order save failed" },
         { status: 500 }
       );
-    }
-
-    const orderItems = Object.entries(quantities)
-      .filter(([id, qty]) => qty > 0 && id in ITEM_PRICE_CENTS)
-      .map(([id, qty]) => ({
-        order_id: orderId,
-        item_id: id,
-        quantity: qty,
-        unit_price_cents: ITEM_PRICE_CENTS[id],
-      }));
-
-    if (orderItems.length > 0) {
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error("Order items insert failed:", itemsError);
-      }
     }
 
     return NextResponse.json({ ok: true, order_id: orderId });
