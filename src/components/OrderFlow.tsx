@@ -95,7 +95,7 @@ export function OrderFlow() {
         });
         if (!res.ok) {
           const body = await res.json().catch(() => null);
-          setErrorMsg(body?.error || "Your file exceeded the maximum size of 10 MB. Please try again.");
+          setErrorMsg(body?.error || "Something is wrong with your connection. Please try again or refresh the page.");
           return;
         }
         setStep("confirmation");
