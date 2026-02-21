@@ -305,6 +305,11 @@ export function OrderFlow() {
               </div>
             ))}
           </div>
+          {
+            <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-right mt-4">
+              Total: ${orderTotal}
+            </p>
+          }
           {errorMsg && (
             <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
           )}
