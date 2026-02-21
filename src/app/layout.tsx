@@ -13,12 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link
-          href="https://fonts.cdnfonts.com/css/baby-doll"
-          rel="stylesheet"
-        />
-      </head>
+      <head />
       <body className="antialiased">{children}</body>
     </html>
   );
