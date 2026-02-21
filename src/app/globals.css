@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FDEEB9;
+  --red: #D94535;
+  --blue: #64c6e5;
+  --outer-bg: #FFE18D;
+}
+
+body {
+  background-color: var(--outer-bg);
+  min-height: 100vh;
+}
+
+.font-baby-doll {
+  font-family: "Baby Doll", sans-serif;
+}
