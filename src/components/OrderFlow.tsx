@@ -166,7 +166,7 @@ export function OrderFlow() {
             <img
               src="/camera-girl.png"
               alt="Camera girl decoration"
-              className="absolute right-0 bottom-0 w-[33%] sm:w-[200px] h-auto object-contain"
+              className="absolute right-0 bottom-0 w-[45%] sm:w-[200px] h-auto object-contain"
             />
           </div>
           <div className="flex justify-center pt-3 pb-1">
