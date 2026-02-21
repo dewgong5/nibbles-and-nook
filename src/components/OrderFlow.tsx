@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { MenuFlyerImage } from "./MenuFlyerImage";
 
 const RED = "#D44A3D";
 
@@ -56,12 +55,11 @@ export function OrderFlow() {
       if (!paymentFile) return;
       setSubmitting(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
         const form = new FormData();
         form.append("personal", JSON.stringify({ ...personal }));
         form.append("quantities", JSON.stringify({ ...quantities }));
         form.append("proof", paymentFile);
-        const res = await fetch(`${apiUrl}/api/order`, {
+        const res = await fetch("/api/order", {
           method: "POST",
           body: form,
         });
@@ -76,7 +74,7 @@ export function OrderFlow() {
     }
     const next = getNextStep(step);
     if (next) setStep(next);
-  }, [step, personal, quantities]);
+  }, [step, personal, quantities, paymentFile]);
 
   const goPrev = useCallback(() => {
     const prev = getPrevStep(step);
@@ -99,30 +97,47 @@ export function OrderFlow() {
   // ----- Landing -----
   if (step === "landing") {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8]">
-          <div className="relative w-full bg-[var(--cream)] flex flex-col items-center justify-center pt-8 pb-2 px-6">
-            <p className="text-[#D44A3D] text-sm font-medium mb-1">Welcome to</p>
-            <h1 className="font-baby-doll text-[#D44A3D] text-3xl md:text-4xl font-bold text-center tracking-tight">
-              Nibbles & nOOk
-            </h1>
-            <MenuFlyerImage />
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-3 sm:px-5 pb-4 sm:pb-6">
+          <div className="flex justify-center -mt-6 -mb-4 overflow-hidden">
+            <img
+              src="/hero-group.png"
+              alt="Nibbles and nOOk crew"
+              className="w-[80%] max-w-[290px] h-auto object-contain mt-[-12%]"
+            />
           </div>
-          <div className="p-5 pb-6">
-            <div className="rounded-xl bg-[#D44A3D] p-4 text-white">
-              <h2 className="text-lg font-semibold mb-3">What do we have?</h2>
-              <ul className="space-y-1.5 text-sm">
-                {ORDERABLE_ITEMS.map((item) => (
-                  <li key={item.id}>
-                    {item.name}: <span className="font-medium">${item.price}</span>
-                  </li>
-                ))}
+          <div className="pb-2 text-center text-[#D44A3D]">
+            <p className="font-baby-doll text-lg sm:text-xl leading-none">Welcome to</p>
+            <div className="-mt-1 flex justify-center">
+              <img
+                src="/logo-nnn.png"
+                alt="Nibbles & nOOk"
+                className="w-[65%] max-w-[260px] h-auto object-contain"
+              />
+            </div>
+          </div>
+          <div className="relative px-1 sm:px-2 pb-2">
+            <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[35%] sm:mr-[145px]">
+              <h2 className="font-baby-doll text-base sm:text-[20px] leading-none mb-2">What do we have?</h2>
+              <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
+                <li>Pork Bakmie: $14</li>
+                <li>-No pork for items below-</li>
+                <li>Earl Grey Tiramisu: $12</li>
+                <li>Chestnut Tiramisu: $12</li>
+                <li>Choipan: $13 (limited!)</li>
               </ul>
             </div>
+            <img
+              src="/camera-girl.png"
+              alt="Camera girl decoration"
+              className="absolute right-0 bottom-0 w-[33%] sm:w-[200px] h-auto object-contain"
+            />
+          </div>
+          <div className="flex justify-center pt-3 pb-1">
             <button
               type="button"
               onClick={() => setStep("personal")}
-              className="font-baby-doll mt-4 w-full py-3 rounded-full bg-[#D44A3D] text-white font-semibold text-lg shadow hover:bg-[#c24135] focus:outline-none focus:ring-2 focus:ring-[#D44A3D] focus:ring-offset-2 focus:ring-offset-[var(--cream)] transition-colors"
+              className="font-baby-doll px-6 sm:px-8 py-2 rounded-full bg-[#D44A3D] text-[#fff4dd] text-2xl sm:text-[32px] leading-none hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[#D44A3D] focus:ring-offset-2 focus:ring-offset-[var(--cream)] transition-opacity"
             >
               Order
             </button>
@@ -132,88 +147,121 @@ export function OrderFlow() {
     );
   }
 
-  // ----- Shared layout for steps 1–4: header + content + nav -----
-  const stepTitles: Record<Exclude<Step, "landing">, string> = {
-    personal: "Fill in your personal info!",
-    order: `Tell us your order, ${personal.name || "there"}!`,
-    payment: "Please attach proof of payment here!",
-    confirmation: "Thank you for your order!",
-  };
-
-  const renderStepContent = () => {
-    switch (step) {
-      case "personal":
-        return (
+  // ----- Personal info (poster style) -----
+  if (step === "personal") {
+    const canProceed = personal.name && personal.email && personal.phone;
+    return (
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+          <div className="flex justify-center mb-2">
+            <img
+              src="/logo-nnn.png"
+              alt="Nibbles & nOOk"
+              className="w-[45%] max-w-[180px] h-auto object-contain"
+            />
+          </div>
+          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
+            Fill in your personal info!
+          </h2>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: RED }}>
-                Name
-              </label>
+            <div className="flex items-center gap-3">
+              <label className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold w-[80px] sm:w-[90px] shrink-0">Name:</label>
               <input
                 type="text"
                 value={personal.name}
                 onChange={(e) => setPersonal((p) => ({ ...p, name: e.target.value }))}
                 placeholder="Your name"
-                className="w-full px-4 py-2 rounded-xl text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: RED }}>
-                Email
-              </label>
+            <div className="flex items-center gap-3">
+              <label className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold w-[80px] sm:w-[90px] shrink-0">Email:</label>
               <input
                 type="email"
                 value={personal.email}
                 onChange={(e) => setPersonal((p) => ({ ...p, email: e.target.value }))}
                 placeholder="you@example.com"
-                className="w-full px-4 py-2 rounded-xl text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: RED }}>
-                Phone
-              </label>
+            <div className="flex items-center gap-3">
+              <label className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold w-[80px] sm:w-[90px] shrink-0">Phone:</label>
               <input
                 type="tel"
                 value={personal.phone}
                 onChange={(e) => setPersonal((p) => ({ ...p, phone: e.target.value }))}
                 placeholder="+1 234 567 8900"
-                className="w-full px-4 py-2 rounded-xl text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
               />
             </div>
           </div>
-        );
+          <div className="flex items-end justify-between mt-2">
+            <img
+              src="/guitar-guy.png"
+              alt="Guitar guy decoration"
+              className="w-[40%] max-w-[160px] h-auto object-contain"
+            />
+            <div className="flex gap-2 pb-2">
+              <button
+                type="button"
+                onClick={goPrev}
+                className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10 focus:outline-none transition-colors"
+                style={{ borderColor: RED }}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => goNext()}
+                disabled={!canProceed}
+                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-      case "order":
-        return (
+  // ----- Order step (poster style) -----
+  if (step === "order") {
+    const canProceed = totalItems > 0;
+    return (
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+          <div className="flex justify-center mb-2">
+            <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
+          </div>
+          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
+            Tell us your order, {personal.name || "there"}!
+          </h2>
           <div className="space-y-4">
             {ORDERABLE_ITEMS.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-4 rounded-xl py-2 px-3"
-                style={{ backgroundColor: RED }}
-              >
-                <span className="text-white text-sm flex-1">
-                  {item.name}: ($ {item.price})
-                </span>
+              <div key={item.id} className="flex items-center justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">{item.name}:</p>
+                  <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">($ {item.price})</p>
+                </div>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setQuantity(item.id, -1)}
-                    className="w-8 h-8 rounded-lg bg-white/20 text-white font-bold hover:bg-white/30 focus:outline-none"
+                    className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold text-lg hover:opacity-90 focus:outline-none flex items-center justify-center"
                   >
-                    -
+                    −
                   </button>
-                  <span className="text-white w-8 text-center font-medium">
+                  <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold text-lg flex items-center justify-center">
                     {quantities[item.id] ?? 0}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(item.id, 1)}
-                    className="w-8 h-8 rounded-lg bg-white/20 text-white font-bold hover:bg-white/30 focus:outline-none"
+                    className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold text-lg hover:opacity-90 focus:outline-none flex items-center justify-center"
                   >
                     +
                   </button>
@@ -221,108 +269,129 @@ export function OrderFlow() {
               </div>
             ))}
           </div>
-        );
-
-      case "payment":
-        return (
-          <div className="space-y-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf"
-              className="hidden"
-              onChange={(e) => {
-                setPaymentFile(e.target.files?.[0] ?? null);
-                e.target.value = "";
-              }}
+          <div className="relative mt-3">
+            <img
+              src="/rabbit-waiter.png"
+              alt="Rabbit waiter decoration"
+              className="w-[40%] max-w-[160px] h-auto object-contain"
             />
-            <div
-              className="w-full py-8 rounded-xl text-center text-white transition-opacity"
-              style={{ backgroundColor: RED }}
-            >
-              {paymentFile ? (
-                <div className="flex flex-col items-center gap-2">
-                  <span className="font-medium">{paymentFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-sm underline opacity-90 hover:opacity-100"
-                  >
-                    Change file
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="w-full h-full cursor-pointer hover:opacity-90 focus:outline-none"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Insert File
-                </button>
-              )}
-            </div>
-          </div>
-        );
-
-      case "confirmation":
-        return (
-          <div className="space-y-3 text-left" style={{ color: RED }}>
-            <p>For any questions, feel free to reach out to Michael</p>
-            <p>
-              <a href="tel:+12368775949" className="underline">+1 (236) 877-5949</a>
-            </p>
-            <p>Pickup at Metrotown Station.</p>
-            <p>December 7th at 4-5 PM</p>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const showNext =
-    step !== "confirmation" &&
-    (step !== "personal" || (personal.name && personal.email && personal.phone)) &&
-    (step !== "order" || totalItems > 0) &&
-    (step !== "payment" || paymentFile);
-
-  return (
-    <main className="min-h-screen flex items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8]">
-        <div className="pt-6 px-6 pb-2">
-          <h1 className="font-baby-doll text-2xl text-center" style={{ color: RED }}>
-            Nibbles & nOOk
-          </h1>
-          <h2 className="text-lg font-bold mt-2 text-center" style={{ color: RED }}>
-            {stepTitles[step]}
-          </h2>
-        </div>
-        <div className="p-5 pb-6 space-y-4">
-          {renderStepContent()}
-          <div className="flex gap-2 pt-2">
-            {getPrevStep(step) && (
+            <div className="absolute bottom-2 right-0 flex gap-2">
               <button
                 type="button"
                 onClick={goPrev}
-                className="flex-1 py-3 rounded-full border-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--cream)]"
-                style={{ borderColor: RED, color: RED }}
+                className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10 focus:outline-none transition-colors"
+                style={{ borderColor: RED }}
               >
                 Back
               </button>
-            )}
-            {step !== "confirmation" && (
               <button
                 type="button"
                 onClick={() => goNext()}
-                disabled={!showNext || submitting}
-                className="flex-1 py-3 rounded-full text-white font-semibold text-lg shadow hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--cream)] disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: RED }}
+                disabled={!canProceed}
+                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
               >
-                {submitting ? "..." : "Next"}
+                Next
               </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ----- Payment step (poster style) -----
+  if (step === "payment") {
+    const canProceed = !!paymentFile;
+    return (
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+          <div className="flex justify-center mb-2">
+            <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
+          </div>
+          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
+            Please attach proof of payment here!
+          </h2>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              setPaymentFile(e.target.files?.[0] ?? null);
+              e.target.value = "";
+            }}
+          />
+          <div
+            className="w-full py-10 rounded-2xl text-center text-white cursor-pointer transition-opacity hover:opacity-90"
+            style={{ backgroundColor: RED }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {paymentFile ? (
+              <div className="flex flex-col items-center gap-2">
+                <span className="font-baby-doll text-xl font-medium">{paymentFile.name}</span>
+                <span className="font-baby-doll text-sm underline opacity-90">Change file</span>
+              </div>
+            ) : (
+              <span className="font-baby-doll text-2xl font-bold">Insert File</span>
             )}
           </div>
+          <div className="mt-4 px-1">
+            <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
+              Don&apos;t forget to insert note of the food.
+            </p>
+            <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
+              Ex: {personal.name || "Nathan"} - Bakmi (2), Tiramisu (1)
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              onClick={goPrev}
+              className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10 focus:outline-none transition-colors"
+              style={{ borderColor: RED }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => goNext()}
+              disabled={!canProceed || submitting}
+              className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            >
+              {submitting ? "..." : "Next"}
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ----- Confirmation step -----
+  return (
+    <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+      <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+        <div className="flex justify-center mb-2">
+          <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
+        </div>
+        <h2 className="font-baby-doll text-[#D44A3D] text-2xl sm:text-3xl font-bold text-center mb-5">
+          Thank you for your order!
+        </h2>
+        <div className="space-y-2 text-center font-baby-doll text-[#D44A3D] text-base sm:text-lg">
+          <p>For any questions, feel free to reach out to Michael</p>
+          <p>
+            <a href="tel:+12368775949" className="underline">+1 (236) 877-5949</a>
+          </p>
+          <div className="pt-2">
+            <p>Pickup at Metrotown Station,</p>
+            <p>December 7th at 4-5 PM</p>
+          </div>
+        </div>
+        <div className="flex justify-center mt-4">
+          <img
+            src="/bye-group.png"
+            alt="Thank you!"
+            className="w-[75%] max-w-[300px] h-auto object-contain"
+          />
         </div>
       </div>
     </main>

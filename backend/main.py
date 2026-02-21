@@ -61,23 +61,24 @@ async def submit_order(
     quantities_data = json.loads(quantities)
     file_content = await proof.read()
 
-    if not os.getenv("DATABASE_URL"):
-        print("=" * 60)
-        print("NEW ORDER (no DATABASE_URL — not saved to DB)")
-        print("Personal:", personal_data)
-        print("Quantities:", quantities_data)
-        print("Proof file:", proof.filename, f"({len(file_content)} bytes)")
-        print("=" * 60)
-        return {"ok": True}
-
     order_id = str(uuid.uuid4())
     proof_filename = proof.filename or "proof"
     safe_name = sanitize_filename(proof_filename)
+
     order_upload_dir = UPLOAD_DIR / order_id
     order_upload_dir.mkdir(parents=True, exist_ok=True)
     proof_path = order_upload_dir / safe_name
     proof_path.write_bytes(file_content)
     proof_stored = f"{order_id}/{safe_name}"
+
+    if not os.getenv("DATABASE_URL"):
+        print("=" * 60)
+        print("NEW ORDER (no DATABASE_URL — not saved to DB)")
+        print("Personal:", personal_data)
+        print("Quantities:", quantities_data)
+        print("Proof file:", proof_filename, f"({len(file_content)} bytes)")
+        print("=" * 60)
+        return {"ok": True, "order_id": order_id}
 
     try:
         session_factory = get_session_factory()

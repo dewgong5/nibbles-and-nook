@@ -13,9 +13,14 @@ __pycache__/
 venv/
 env/
 
-# Env and uploads (backend has its own; listed here if running from root)
+# Env and uploads
+.env
+.env.local
+.env*.local
 backend/.env
 backend/uploads/
+service-account.json
+ttslol-455301-b7361ecd8b67.json
 
 # IDE / OS
 .idea/
