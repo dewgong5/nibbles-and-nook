@@ -49,8 +49,38 @@ export function OrderFlow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+  const validateStep = useCallback((): string | null => {
+    if (step === "personal") {
+      if (!personal.name.trim()) return "Please enter your name.";
+      if (personal.name.length > 255) return "Name is too long (max 255 characters).";
+      if (!personal.email.trim()) return "Please enter your email.";
+      if (!EMAIL_REGEX.test(personal.email)) return "Please enter a valid email address.";
+      if (!personal.phone.trim()) return "Please enter your phone number.";
+    }
+    if (step === "order") {
+      const total = Object.values(quantities).reduce((a, b) => a + b, 0);
+      if (total <= 0) return "Please add at least one item to your order.";
+    }
+    if (step === "payment") {
+      if (!paymentFile) return "Please upload your proof of payment.";
+      if (paymentFile.size > MAX_FILE_SIZE) return "File is too large (max 10 MB).";
+    }
+    return null;
+  }, [step, personal, quantities, paymentFile]);
 
   const goNext = useCallback(async () => {
+    const err = validateStep();
+    if (err) {
+      setErrorMsg(err);
+      return;
+    }
+    setErrorMsg("");
+
     if (step === "payment") {
       if (!paymentFile) return;
       setSubmitting(true);
@@ -63,10 +93,15 @@ export function OrderFlow() {
           method: "POST",
           body: form,
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          setErrorMsg(body?.error || "Something went wrong. Please try again.");
+          return;
+        }
         setStep("confirmation");
       } catch (e) {
         console.error("Order submit failed:", e);
+        setErrorMsg("Could not submit order. Please check your connection and try again.");
       } finally {
         setSubmitting(false);
       }
@@ -74,9 +109,10 @@ export function OrderFlow() {
     }
     const next = getNextStep(step);
     if (next) setStep(next);
-  }, [step, personal, quantities, paymentFile]);
+  }, [step, personal, quantities, paymentFile, validateStep]);
 
   const goPrev = useCallback(() => {
+    setErrorMsg("");
     const prev = getPrevStep(step);
     if (prev) setStep(prev);
   }, [step]);
@@ -149,7 +185,6 @@ export function OrderFlow() {
 
   // ----- Personal info (poster style) -----
   if (step === "personal") {
-    const canProceed = personal.name && personal.email && personal.phone;
     return (
       <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
@@ -169,7 +204,7 @@ export function OrderFlow() {
               <input
                 type="text"
                 value={personal.name}
-                onChange={(e) => setPersonal((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) => { setPersonal((p) => ({ ...p, name: e.target.value })); setErrorMsg(""); }}
                 placeholder="Your name"
                 className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
@@ -180,7 +215,7 @@ export function OrderFlow() {
               <input
                 type="email"
                 value={personal.email}
-                onChange={(e) => setPersonal((p) => ({ ...p, email: e.target.value }))}
+                onChange={(e) => { setPersonal((p) => ({ ...p, email: e.target.value })); setErrorMsg(""); }}
                 placeholder="you@example.com"
                 className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
@@ -191,13 +226,16 @@ export function OrderFlow() {
               <input
                 type="tel"
                 value={personal.phone}
-                onChange={(e) => setPersonal((p) => ({ ...p, phone: e.target.value }))}
+                onChange={(e) => { setPersonal((p) => ({ ...p, phone: e.target.value })); setErrorMsg(""); }}
                 placeholder="+1 234 567 8900"
                 className="flex-1 px-4 py-2.5 rounded-full text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ backgroundColor: RED }}
               />
             </div>
           </div>
+          {errorMsg && (
+            <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
+          )}
           <div className="flex items-end justify-between mt-2">
             <img
               src="/guitar-guy.png"
@@ -216,8 +254,7 @@ export function OrderFlow() {
               <button
                 type="button"
                 onClick={() => goNext()}
-                disabled={!canProceed}
-                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none transition-opacity"
               >
                 Next
               </button>
@@ -230,7 +267,6 @@ export function OrderFlow() {
 
   // ----- Order step (poster style) -----
   if (step === "order") {
-    const canProceed = totalItems > 0;
     return (
       <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
@@ -250,7 +286,7 @@ export function OrderFlow() {
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setQuantity(item.id, -1)}
+                    onClick={() => { setQuantity(item.id, -1); setErrorMsg(""); }}
                     className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold text-lg hover:opacity-90 focus:outline-none flex items-center justify-center"
                   >
                     −
@@ -260,7 +296,7 @@ export function OrderFlow() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity(item.id, 1)}
+                    onClick={() => { setQuantity(item.id, 1); setErrorMsg(""); }}
                     className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold text-lg hover:opacity-90 focus:outline-none flex items-center justify-center"
                   >
                     +
@@ -269,6 +305,9 @@ export function OrderFlow() {
               </div>
             ))}
           </div>
+          {errorMsg && (
+            <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
+          )}
           <div className="relative mt-3">
             <img
               src="/rabbit-waiter.png"
@@ -287,8 +326,7 @@ export function OrderFlow() {
               <button
                 type="button"
                 onClick={() => goNext()}
-                disabled={!canProceed}
-                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none transition-opacity"
               >
                 Next
               </button>
@@ -301,7 +339,6 @@ export function OrderFlow() {
 
   // ----- Payment step (poster style) -----
   if (step === "payment") {
-    const canProceed = !!paymentFile;
     return (
       <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
@@ -318,6 +355,7 @@ export function OrderFlow() {
             className="hidden"
             onChange={(e) => {
               setPaymentFile(e.target.files?.[0] ?? null);
+              setErrorMsg("");
               e.target.value = "";
             }}
           />
@@ -343,6 +381,9 @@ export function OrderFlow() {
               Ex: {personal.name || "Nathan"} - Bakmi (2), Tiramisu (1)
             </p>
           </div>
+          {errorMsg && (
+            <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
+          )}
           <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"
@@ -355,10 +396,10 @@ export function OrderFlow() {
             <button
               type="button"
               onClick={() => goNext()}
-              disabled={!canProceed || submitting}
+              disabled={submitting}
               className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
-              {submitting ? "..." : "Next"}
+              {submitting ? "Submitting..." : "Next"}
             </button>
           </div>
         </div>
