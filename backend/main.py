@@ -12,12 +12,12 @@ from database import Order, OrderItem, get_session_factory, init_db
 
 load_dotenv()
 
-# Item ID -> price in cents (for storing in order_items)
+# Item ID -> price in dollars (for storing in order_items)
 ITEM_PRICE_CENTS = {
-    "pork-bakmie": 1400,
-    "earl-grey-tiramisu": 1200,
-    "chestnut-tiramisu": 1200,
-    "choipan": 1300,
+    "nasi-bakar-3-rasa": 14,
+    "cendol": 5,
+    "nasi-bakar-and-cendol": 16,
+    "nasi-ulam-betawi": 17,
 }
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"

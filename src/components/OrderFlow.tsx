@@ -5,10 +5,10 @@ import { useState, useCallback, useRef } from "react";
 const RED = "#D44A3D";
 
 const ORDERABLE_ITEMS = [
-  { id: "pork-bakmie", name: "Pork Bakmie", price: 14 },
-  { id: "earl-grey-tiramisu", name: "Earl Grey Tiramisu", price: 12 },
-  { id: "chestnut-tiramisu", name: "Chestnut Tiramisu", price: 12 },
-  { id: "choipan", name: "Choipan", price: 13 },
+  { id: "nasi-bakar-3-rasa", name: "Nasi Bakar 3 Rasa (Ayam, Cumi, Ikan)", price: 14 },
+  { id: "cendol", name: "Cendol", price: 5 },
+  { id: "nasi-bakar-and-cendol", name: "Nasi Bakar and Cendol", price: 16 },
+  { id: "nasi-ulam-betawi", name: "Nasi Ulam Betawi", price: 17 },
 ] as const;
 
 type Step = "landing" | "personal" | "order" | "payment" | "confirmation";
@@ -156,11 +156,11 @@ export function OrderFlow() {
             <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[35%] sm:mr-[145px]">
               <h2 className="font-baby-doll text-base sm:text-[20px] leading-none mb-2">What do we have?</h2>
               <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
-                <li>Pork Bakmie: $14</li>
                 <li>-No pork for items below-</li>
-                <li>Earl Grey Tiramisu: $12</li>
-                <li>Chestnut Tiramisu: $12</li>
-                <li>Choipan: $13 (limited!)</li>
+                <li>Nasi Bakar 3 Rasa (Ayam, Cumi, Ikan): $14</li>
+                <li>Cendol: $5</li>
+                <li>Nasi Bakar and Cendol: $16</li>
+                <li>Nasi Ulam Betawi: $17</li>
               </ul>
             </div>
             <img

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
 const ITEM_PRICE_CENTS: Record<string, number> = {
-  "pork-bakmie": 1400,
-  "earl-grey-tiramisu": 1200,
-  "chestnut-tiramisu": 1200,
-  "choipan": 1300,
+  "nasi-bakar-3-rasa": 14,
+  "cendol": 5,
+  "nasi-bakar-and-cendol": 16,
+  "nasi-ulam-betawi": 17,
 };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
