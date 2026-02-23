@@ -355,7 +355,7 @@ export function OrderFlow() {
             <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
           </div>
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
-            Please attach proof of payment here! For etransfers, please send to nathan.tedjo@gmai.com
+            Please attach proof of payment here! For etransfers, please send to nathan.tedjo@gmail.com
           </h2>
           <input
             ref={fileInputRef}
