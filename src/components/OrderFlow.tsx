@@ -161,7 +161,7 @@ export function OrderFlow() {
               <h2 className="font-baby-doll text-base sm:text-[20px] leading-none mb-2">What do we have?</h2>
               <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
                 <li>-No pork for items below-</li>
-                <li>Nasi Bakar 3 Rasa (Ayam, Cumi, Ikan): $14</li>
+                <li>Nasi Bakar 3 Rasa (Ayam, Cumi, Rendang): $14</li>
                 <li>Cendol: $5</li>
                 <li>Nasi Bakar and Cendol: $16</li>
                 <li>Nasi Ulam Betawi: $17</li>
