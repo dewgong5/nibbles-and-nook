@@ -4,11 +4,11 @@ import { supabase } from "@/lib/supabase";
 const ITEM_PRICE_CENTS: Record<string, number> = {
   "nasi-bakar-ayam": 14,
   "nasi-bakar-cumi": 14,
-  "nasi-bakar-ikan": 14,
+  "nasi-bakar-rendang": 14,
   "cendol": 5,
   "nasi-bakar-cumi-and-cendol": 16,
   "nasi-bakar-ayam-and-cendol": 16,
-  "nasi-bakar-ikan-and-cendol": 16,
+  "nasi-bakar-rendang-and-cendol": 16,
   "nasi-ulam-betawi": 17,
 };
 
@@ -121,11 +121,11 @@ export async function POST(req: NextRequest) {
       customer_phone: personal.phone.trim(),
       qty_nasi_bakar_ayam: quantities["nasi-bakar-ayam"] ?? 0,
       qty_nasi_bakar_cumi: quantities["nasi-bakar-cumi"] ?? 0,
-      qty_nasi_bakar_ikan: quantities["nasi-bakar-ikan"] ?? 0,
+      qty_nasi_bakar_rendang: quantities["nasi-bakar-rendang"] ?? 0,
       qty_cendol: quantities["cendol"] ?? 0,
       qty_nasi_bakar_cumi_and_cendol: quantities["nasi-bakar-cumi-and-cendol"] ?? 0,
       qty_nasi_bakar_ayam_and_cendol: quantities["nasi-bakar-ayam-and-cendol"] ?? 0,
-      qty_nasi_bakar_ikan_and_cendol: quantities["nasi-bakar-ikan-and-cendol"] ?? 0,
+      qty_nasi_bakar_rendang_and_cendol: quantities["nasi-bakar-rendang-and-cendol"] ?? 0,
       qty_nasi_ulam_betawi: quantities["nasi-ulam-betawi"] ?? 0,
       total_price: totalPrice,
       proof_original_filename: originalFilename.slice(0, 512),

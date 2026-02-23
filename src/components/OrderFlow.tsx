@@ -7,11 +7,11 @@ const RED = "#D44A3D";
 const ORDERABLE_ITEMS = [
   { id: "nasi-bakar-ayam", name: "Nasi Bakar Ayam", price: 14 },
   { id: "nasi-bakar-cumi", name: "Nasi Bakar Cumi", price: 14 },
-  { id: "nasi-bakar-ikan", name: "Nasi Bakar Ikan", price: 14 },
+  { id: "nasi-bakar-rendang", name: "Nasi Bakar Rendang", price: 14 },
   { id: "cendol", name: "Cendol", price: 5 },
   { id: "nasi-bakar-cumi-and-cendol", name: "Nasi Bakar Cumi and Cendol", price: 16 },
   { id: "nasi-bakar-ayam-and-cendol", name: "Nasi Bakar Ayam and Cendol", price: 16 },
-  { id: "nasi-bakar-ikan-and-cendol", name: "Nasi Bakar Ikan and Cendol", price: 16 },
+  { id: "nasi-bakar-rendang-and-cendol", name: "Nasi Bakar Rendang and Cendol", price: 16 },
   { id: "nasi-ulam-betawi", name: "Nasi Ulam Betawi", price: 17 },
 ] as const;
 
