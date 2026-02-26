@@ -15,7 +15,7 @@ const ORDERABLE_ITEMS = [
   { id: "nasi-ulam-betawi", name: "Nasi Ulam Betawi", price: 17 },
 ] as const;
 
-type Step = "landing" | "personal" | "order" | "payment" | "confirmation";
+type Step = "landing" | "personal" | "order" | "pickup" | "payment" | "confirmation";
 
 interface PersonalInfo {
   name: string;
@@ -27,7 +27,12 @@ interface OrderQuantities {
   [key: string]: number;
 }
 
-const STEPS: Step[] = ["landing", "personal", "order", "payment", "confirmation"];
+const PICKUP_OPTIONS = [
+  { id: "sabtu-metrotown", label: "Saturday, 7th March — Metrotown" },
+  { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church" },
+] as const;
+
+const STEPS: Step[] = ["landing", "personal", "order", "pickup", "payment", "confirmation"];
 
 function getNextStep(current: Step): Step | null {
   const i = STEPS.indexOf(current);
@@ -49,6 +54,7 @@ export function OrderFlow() {
   const [quantities, setQuantities] = useState<OrderQuantities>(() =>
     ORDERABLE_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {})
   );
+  const [pickup, setPickup] = useState("");
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,12 +76,15 @@ export function OrderFlow() {
       const total = Object.values(quantities).reduce((a, b) => a + b, 0);
       if (total <= 0) return "Please add at least one item to your order.";
     }
+    if (step === "pickup") {
+      if (!pickup) return "Please select a pickup option.";
+    }
     if (step === "payment") {
       if (!paymentFile) return "Please upload your proof of payment.";
       if (paymentFile.size > MAX_FILE_SIZE) return "File is too large (max 10 MB).";
     }
     return null;
-  }, [step, personal, quantities, paymentFile]);
+  }, [step, personal, quantities, pickup, paymentFile]);
 
   const goNext = useCallback(async () => {
     const err = validateStep();
@@ -92,6 +101,7 @@ export function OrderFlow() {
         const form = new FormData();
         form.append("personal", JSON.stringify({ ...personal }));
         form.append("quantities", JSON.stringify({ ...quantities }));
+        form.append("pickup", pickup);
         form.append("proof", paymentFile);
         const res = await fetch("/api/order", {
           method: "POST",
@@ -340,6 +350,61 @@ export function OrderFlow() {
                 Next
               </button>
             </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ----- Pickup step (poster style) -----
+  if (step === "pickup") {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+          <div className="flex justify-center mb-2">
+            <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
+          </div>
+          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
+            Where do you want to pick up?
+          </h2>
+          <div className="space-y-3">
+            {PICKUP_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => { setPickup(opt.id); setErrorMsg(""); }}
+                className={`w-full px-4 py-4 rounded-2xl text-left font-baby-doll text-lg sm:text-xl transition-all ${
+                  pickup === opt.id
+                    ? "bg-[#D44A3D] text-[#fff4dd]"
+                    : "bg-[#D44A3D]/10 text-[#D44A3D] hover:bg-[#D44A3D]/20"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <p className="font-baby-doll text-[#D44A3D]/70 text-sm sm:text-base italic mt-4 text-center leading-snug">
+            *We recommend the Saturday pick-up for maximum freshness and taste since all cooking will be done on 7th March.
+          </p>
+          {errorMsg && (
+            <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
+          )}
+          <div className="flex justify-end gap-2 mt-5">
+            <button
+              type="button"
+              onClick={goPrev}
+              className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10 focus:outline-none transition-colors"
+              style={{ borderColor: RED }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => goNext()}
+              className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 focus:outline-none transition-opacity"
+            >
+              Next
+            </button>
           </div>
         </div>
       </main>

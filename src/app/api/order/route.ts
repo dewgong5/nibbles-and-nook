@@ -47,13 +47,20 @@ function validateQuantities(data: unknown): data is Record<string, number> {
 
 export async function POST(req: NextRequest) {
   try {
+    const VALID_PICKUPS = ["sabtu-metrotown", "minggu-iec"];
+
     const formData = await req.formData();
     const personalRaw = formData.get("personal") as string;
     const quantitiesRaw = formData.get("quantities") as string;
+    const pickupRaw = formData.get("pickup") as string;
     const proof = formData.get("proof") as File | null;
 
-    if (!personalRaw || !quantitiesRaw || !proof) {
+    if (!personalRaw || !quantitiesRaw || !pickupRaw || !proof) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    if (!VALID_PICKUPS.includes(pickupRaw)) {
+      return NextResponse.json({ error: "Invalid pickup option" }, { status: 400 });
     }
 
     let personal: unknown;
@@ -119,6 +126,7 @@ export async function POST(req: NextRequest) {
       customer_name: personal.name.trim(),
       customer_email: personal.email.trim().toLowerCase(),
       customer_phone: personal.phone.trim(),
+      pickup_option: pickupRaw,
       qty_nasi_bakar_ayam: quantities["nasi-bakar-ayam"] ?? 0,
       qty_nasi_bakar_cumi: quantities["nasi-bakar-cumi"] ?? 0,
       qty_nasi_bakar_rendang: quantities["nasi-bakar-rendang"] ?? 0,

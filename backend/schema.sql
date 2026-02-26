@@ -29,6 +29,7 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_cumi_and_cendol INTEG
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ayam_and_cendol INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_rendang_and_cendol INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_price INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_option VARCHAR(64) NOT NULL DEFAULT '';
 
 -- Drop old columns that no longer apply
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_3_rasa;
@@ -45,6 +46,7 @@ ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_and_cendol;
 --     customer_name VARCHAR(255) NOT NULL,
 --     customer_email VARCHAR(255) NOT NULL,
 --     customer_phone VARCHAR(64) NOT NULL,
+--     pickup_option VARCHAR(64) NOT NULL DEFAULT '',
 --     qty_nasi_bakar_ayam INTEGER NOT NULL DEFAULT 0,
 --     qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0,
 --     qty_nasi_bakar_rendang INTEGER NOT NULL DEFAULT 0,
