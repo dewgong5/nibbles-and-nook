@@ -28,8 +28,8 @@ interface OrderQuantities {
 }
 
 const PICKUP_OPTIONS = [
-  { id: "sabtu-metrotown", label: "Saturday, 7th March — Metrotown" },
-  { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church" },
+  { id: "sabtu-metrotown", label: "Saturday, 7th March — Metrotown", time: "5:00 – 6:00 PM" },
+  { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church", time: "11:30 AM – 12:00 PM" },
 ] as const;
 
 const STEPS: Step[] = ["landing", "personal", "order", "pickup", "payment", "confirmation"];
@@ -379,7 +379,8 @@ export function OrderFlow() {
                     : "bg-[#D44A3D]/10 text-[#D44A3D] hover:bg-[#D44A3D]/20"
                 }`}
               >
-                {opt.label}
+                <span>{opt.label}</span>
+                <span className="block text-sm sm:text-base mt-1 opacity-80">Pick-up time: {opt.time}</span>
               </button>
             ))}
           </div>
