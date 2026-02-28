@@ -453,7 +453,7 @@ export function OrderFlow() {
               Don&apos;t forget to insert note of the food.
             </p>
             <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
-              Ex: {personal.name || "Nathan"} - Cendol (2), Nasi Bakar (1)
+              Ex: {"Nathan"} - Cendol (2), Nasi Bakar (1)
             </p>
           </div>
           {errorMsg && (
@@ -498,9 +498,7 @@ export function OrderFlow() {
             <a href="tel:+12368775949" className="underline">+1 (236) 877-5949</a>
           </p>
           <div className="pt-2">
-            <p>Pickup at Saturday,</p>
-            <p>March 7th at 5-6 PM</p>
-            <p>Pickup location will be announced soon</p>
+            <p>Pickup based on your selected preference</p>
           </div>
         </div>
         <div className="flex justify-center mt-4">
