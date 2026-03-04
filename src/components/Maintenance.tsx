@@ -8,7 +8,7 @@ export function Maintenance() {
       <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-3 sm:px-5 pb-4 sm:pb-6">
         <div className="flex justify-center mt-12 -mb-4 overflow-hidden">
           <img
-            src="/nnn-maintenance.png"
+            src="/maintenance-nnn.png"
             alt="Nibbles and nOOk crew"
             className="w-[80%] max-w-[290px] h-auto object-contain mt-[-6%]"
           />
