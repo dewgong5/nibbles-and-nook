@@ -26,7 +26,7 @@ export function Maintenance() {
         <div className="relative px-4 pb-2">
           <div className="mx-auto max-w-[230px] rounded-3xl bg-[#D44A3D] px-5 py-3 text-[#fff4dd] text-center">
             <p className="font-baby-doll text-sm sm:text-[16px] leading-tight tracking-tight">
-              Check out our instagram @nibblesandnook in the meantime and for future pre order!
+              Check out our instagram @nibblesandnook in the meantime and for future pre orders!
             </p>
           </div>
         </div>
