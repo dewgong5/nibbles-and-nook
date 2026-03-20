@@ -150,7 +150,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    void sendOrderReceiptEmail({
+    // Must await: serverless runtimes often freeze after the response, killing fire-and-forget work.
+    const mail = await sendOrderReceiptEmail({
       kind: "food",
       orderId,
       customerName: personal.name.trim(),
@@ -159,10 +160,7 @@ export async function POST(req: NextRequest) {
       totalPrice,
       quantities,
       chilis,
-    }).then((r) => {
-      if (!r.ok) console.warn("[api/order] Receipt email:", r.error);
     });
-
     return NextResponse.json({ ok: true, order_id: orderId });
   } catch (e) {
     console.error("Order submission error:", e);

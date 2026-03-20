@@ -316,19 +316,38 @@ export async function sendOrderReceiptEmail(
   const gmailUser = process.env.GMAIL_USER?.trim();
   const gmailPass = process.env.GMAIL_APP_PASSWORD?.trim();
 
+  let result: SendReceiptResult;
+  let provider: "gmail" | "resend" | "none";
+
   if (gmailUser && gmailPass) {
-    return sendViaGmail(input, gmailUser, gmailPass);
+    provider = "gmail";
+    result = await sendViaGmail(input, gmailUser, gmailPass);
+  } else {
+    const apiKey = process.env.RESEND_API_KEY?.trim();
+    const from = process.env.RECEIPT_EMAIL_FROM?.trim();
+
+    if (apiKey && from) {
+      provider = "resend";
+      result = await sendViaResend(input, apiKey, from);
+    } else {
+      provider = "none";
+      console.warn(
+        "[order-receipt-email] No mail configured. Set GMAIL_USER + GMAIL_APP_PASSWORD, or RESEND_API_KEY + RECEIPT_EMAIL_FROM."
+      );
+      result = { ok: false, error: "email_not_configured" };
+    }
   }
-
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RECEIPT_EMAIL_FROM?.trim();
-
-  if (apiKey && from) {
-    return sendViaResend(input, apiKey, from);
-  }
-
-  console.warn(
-    "[order-receipt-email] No mail configured. Set GMAIL_USER + GMAIL_APP_PASSWORD, or RESEND_API_KEY + RECEIPT_EMAIL_FROM."
+  console.log(
+    "[order-receipt-email]",
+    result.ok ? "sent" : "failed",
+    {
+      kind: input.kind,
+      orderId: input.orderId,
+      to: input.customerEmail,
+      provider,
+      ...(result.ok ? {} : { error: result.error }),
+    }
   );
-  return { ok: false, error: "email_not_configured" };
+
+  return result;
 }

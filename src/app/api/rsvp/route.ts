@@ -85,17 +85,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "RSVP save failed" }, { status: 500 });
     }
 
-    void sendOrderReceiptEmail({
+    const mail = await sendOrderReceiptEmail({
       kind: "rsvp",
       orderId,
       customerName: personal.name.trim(),
       customerEmail: personal.email.trim().toLowerCase(),
       customerPhone: personal.phone.trim(),
       totalPrice,
-    }).then((r) => {
-      if (!r.ok) console.warn("[api/rsvp] Receipt email:", r.error);
     });
-
     return NextResponse.json({ ok: true, order_id: orderId });
   } catch (e) {
     console.error("RSVP submission error:", e);
