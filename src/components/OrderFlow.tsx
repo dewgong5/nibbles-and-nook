@@ -251,12 +251,11 @@ export function OrderFlow() {
             </div>
           </div>
           <div className="relative px-1 sm:px-2 pb-2">
-            <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[35%] sm:mr-[145px]">
+            <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[40%] sm:mr-[165px]">
               <h2 className="font-baby-doll text-base sm:text-[20px] leading-none mb-2">For our next event, Nibbles and Nook is doing a pop-up!</h2>
               <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
-                <li>From this website, you can choose two options:</li>
-                <li>1. RSVP for the pop-up</li>
-                <li>2. RSVP & pre-order food!</li>
+                <li>Time: April 11th, 4-9 PM</li>
+                <li>Location:  6537 Telford Avenue </li>
               </ul>
             </div>
             <img src="/camera-girl.png" alt="Camera girl decoration" className="absolute right-0 bottom-0 w-[45%] sm:w-[200px] h-auto object-contain" />
@@ -614,7 +613,7 @@ export function OrderFlow() {
               </a>
             </p>
           </div>
-          <p className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1">
+          <p className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1 text-lg sm:text-xl">
             <span className="font-bold block mb-0.5">Pop-up Location:</span>
             Place: 6537 Telford Avenue
             <br />
