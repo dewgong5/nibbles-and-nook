@@ -506,6 +506,11 @@ export function OrderFlow() {
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
             Please attach proof of payment here! For etransfers, please send to nathan.tedjo@gmail.com
           </h2>
+          {choice === "order" && (
+            <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-4">
+              Total: ${orderTotal}
+            </p>
+          )}
           {choice === "rsvp" && (
             <div className="mb-4 text-center space-y-2">
               <h3 className="font-baby-doll italic underline text-[#D44A3D] text-base sm:text-lg leading-snug px-1">

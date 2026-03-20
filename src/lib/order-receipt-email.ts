@@ -97,8 +97,8 @@ export function buildReceiptPlainText(input: OrderReceiptEmailInput): string {
   const when = new Date().toUTCString();
   const header =
     input.kind === "food"
-      ? "Nibbles & nOOk — order receipt"
-      : "Nibbles & nOOk — RSVP receipt";
+      ? "Nibbles & Nook — order receipt"
+      : "Nibbles & Nook — RSVP receipt";
 
   const lines: string[] = [
     header,
@@ -156,7 +156,7 @@ export function buildReceiptHtml(input: OrderReceiptEmailInput): string {
   const when = escapeHtml(new Date().toUTCString());
   const title =
     input.kind === "food" ? "Order receipt" : "RSVP receipt";
-  const brand = "Nibbles &amp; nOOk";
+  const brand = "Nibbles &amp; Nook";
   const ff = RECEIPT_EMAIL_FONT_FAMILY;
 
   const customerBlock = `
@@ -236,8 +236,8 @@ export type SendReceiptResult =
 function receiptSubject(input: OrderReceiptEmailInput): string {
   const short = input.orderId.slice(0, 8);
   return input.kind === "food"
-    ? `Your Nibbles & nOOk order receipt (#${short}...)`
-    : `Your Nibbles & nOOk RSVP receipt (#${short}...)`;
+    ? `Your Nibbles & Nook order receipt (#${short}...)`
+    : `Your Nibbles & Nook RSVP receipt (#${short}...)`;
 }
 
 /**
@@ -263,7 +263,7 @@ async function sendViaGmail(
     });
 
     await transport.sendMail({
-      from: `"Nibbles & nOOk" <${user}>`,
+      from: `"Nibbles & Nook" <${user}>`,
       to: input.customerEmail,
       subject,
       text,
@@ -326,7 +326,7 @@ async function sendViaResend(
 /**
  * Sends the receipt to the customer.
  *
- * **Gmail (your case):** set `GMAIL_USER=nibblesandnook.dev@gmail.com` and
+ * **Gmail (your case):** set `GMAIL_USER=nibblesandNook.dev@gmail.com` and
  * `GMAIL_APP_PASSWORD` from Google → Security → 2-Step Verification → App passwords.
  * No Google Cloud project or service account is required for this path.
  *
