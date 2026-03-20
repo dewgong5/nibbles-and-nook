@@ -1,63 +1,79 @@
--- Nibbles & nOOk: orders table (Supabase / PostgreSQL)
--- This file contains both the full schema (for fresh setups) and a migration script.
+-- Nibbles & nOOk: `orders` table (Supabase / PostgreSQL)
+-- Pop-up menu: per-dish chili counts + optional paid standalone RSVP.
+-- Safe to run multiple times where noted with IF NOT EXISTS.
 
 -- ============================================================
--- MIGRATION: run this if you already have an orders table
--- and want to migrate from the old 4-item schema to the new 8-item schema.
--- Safe to run multiple times — uses IF EXISTS / IF NOT EXISTS.
+-- Core columns + paid_rsvp
 -- ============================================================
 
--- Drop the old order_items table (no longer used)
-DROP TABLE IF EXISTS order_items;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_rsvp BOOLEAN NOT NULL DEFAULT false;
 
--- Rename ikan → rendang first (skip if columns don't exist)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'qty_nasi_bakar_ikan') THEN
-    ALTER TABLE orders RENAME COLUMN qty_nasi_bakar_ikan TO qty_nasi_bakar_rendang;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'qty_nasi_bakar_ikan_and_cendol') THEN
-    ALTER TABLE orders RENAME COLUMN qty_nasi_bakar_ikan_and_cendol TO qty_nasi_bakar_rendang_and_cendol;
-  END IF;
-END $$;
+COMMENT ON COLUMN orders.paid_rsvp IS
+  'true = paid RSVP-only (no food). false = food pre-order (RSVP included with purchase).';
 
--- Add new item columns (safe to run multiple times)
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ayam INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_rendang INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_cumi_and_cendol INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ayam_and_cendol INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_rendang_and_cendol INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_price INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_option VARCHAR(64) NOT NULL DEFAULT '';
-
--- Drop old columns that no longer apply
-ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_3_rasa;
-ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_and_cendol;
+-- Server: set RSVP_PRICE_DOLLARS in .env to match the fee shown in the app (see DEFAULT_RSVP_PRICE_DOLLARS in src/lib/orders-schema.ts).
 
 -- ============================================================
--- FULL SCHEMA: for fresh setups only (creates table from scratch)
--- Uncomment below if starting from zero.
+-- Pop-up quantity columns (3 dishes × 4 chili variants)
+-- Names must match src/lib/orders-schema.ts
+-- ============================================================
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_kulit_ayam_cabe_ijo INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_kulit_ayam_sambal_matah INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_kulit_ayam_sambal_bawang INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_kulit_ayam_sambal_terasi INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_ayam_geprek_cabe_ijo INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_ayam_geprek_sambal_matah INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_ayam_geprek_sambal_bawang INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_ayam_geprek_sambal_terasi INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_oseng_sapi_cabe_ijo INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_oseng_sapi_sambal_matah INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_oseng_sapi_sambal_bawang INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_oseng_sapi_sambal_terasi INTEGER NOT NULL DEFAULT 0;
+
+-- ============================================================
+-- Optional cleanup (legacy menu / pickup)
+-- Uncomment if you are done with the old schema.
+-- ============================================================
+
+-- ALTER TABLE orders DROP COLUMN IF EXISTS pickup_option;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_ayam;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_cumi;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_rendang;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_cendol;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_cumi_and_cendol;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_ayam_and_cendol;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_rendang_and_cendol;
+-- ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_ulam_betawi;
+
+-- ============================================================
+-- FULL SCHEMA (fresh database — run once, adjust types if needed)
 -- ============================================================
 
 -- CREATE TABLE orders (
 --     id VARCHAR(36) PRIMARY KEY,
---     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+--     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 --     customer_name VARCHAR(255) NOT NULL,
 --     customer_email VARCHAR(255) NOT NULL,
 --     customer_phone VARCHAR(64) NOT NULL,
---     pickup_option VARCHAR(64) NOT NULL DEFAULT '',
---     qty_nasi_bakar_ayam INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_bakar_rendang INTEGER NOT NULL DEFAULT 0,
---     qty_cendol INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_bakar_cumi_and_cendol INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_bakar_ayam_and_cendol INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_bakar_rendang_and_cendol INTEGER NOT NULL DEFAULT 0,
---     qty_nasi_ulam_betawi INTEGER NOT NULL DEFAULT 0,
---     total_price INTEGER NOT NULL DEFAULT 0,
+--     total_price INTEGER NOT NULL,
 --     proof_original_filename VARCHAR(512) NOT NULL,
---     proof_file_path VARCHAR(1024) NOT NULL
+--     proof_file_path VARCHAR(1024) NOT NULL,
+--     paid_rsvp BOOLEAN NOT NULL DEFAULT false,
+--     qty_nasi_kulit_ayam_cabe_ijo INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_kulit_ayam_sambal_matah INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_kulit_ayam_sambal_bawang INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_kulit_ayam_sambal_terasi INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_ayam_geprek_cabe_ijo INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_ayam_geprek_sambal_matah INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_ayam_geprek_sambal_bawang INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_ayam_geprek_sambal_terasi INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_oseng_sapi_cabe_ijo INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_oseng_sapi_sambal_matah INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_oseng_sapi_sambal_bawang INTEGER NOT NULL DEFAULT 0,
+--     qty_nasi_oseng_sapi_sambal_terasi INTEGER NOT NULL DEFAULT 0
 -- );
 
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);

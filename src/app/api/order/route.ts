@@ -1,73 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sendOrderReceiptEmail } from "@/lib/order-receipt-email";
 import { supabase } from "@/lib/supabase";
+import {
+  aggregateChilisToQtyRow,
+  ALLOWED_MIME_TYPES,
+  CHILI_NAMES,
+  ITEM_PRICE_DOLLARS,
+  MAX_FILE_SIZE,
+  ORDERABLE_ITEM_IDS,
+  validatePersonal,
+} from "@/lib/orders-schema";
 
-const ITEM_PRICE_CENTS: Record<string, number> = {
-  "nasi-bakar-ayam": 14,
-  "nasi-bakar-cumi": 14,
-  "nasi-bakar-rendang": 14,
-  "cendol": 5,
-  "nasi-bakar-cumi-and-cendol": 16,
-  "nasi-bakar-ayam-and-cendol": 16,
-  "nasi-bakar-rendang-and-cendol": 16,
-  "nasi-ulam-betawi": 17,
-};
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "application/pdf",
-];
-const MAX_FIELD_LENGTH = 255;
 const MAX_QUANTITY_PER_ITEM = 50;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function validatePersonal(data: unknown): data is { name: string; email: string; phone: string } {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  return (
-    typeof d.name === "string" && d.name.trim().length > 0 && d.name.length <= MAX_FIELD_LENGTH &&
-    typeof d.email === "string" && EMAIL_REGEX.test(d.email) && d.email.length <= MAX_FIELD_LENGTH &&
-    typeof d.phone === "string" && d.phone.trim().length > 0 && d.phone.length <= MAX_FIELD_LENGTH
-  );
-}
 
 function validateQuantities(data: unknown): data is Record<string, number> {
   if (!data || typeof data !== "object") return false;
   const d = data as Record<string, unknown>;
-  for (const [key, val] of Object.entries(d)) {
+  for (const id of ORDERABLE_ITEM_IDS) {
+    const val = d[id];
     if (typeof val !== "number" || !Number.isInteger(val)) return false;
     if (val < 0 || val > MAX_QUANTITY_PER_ITEM) return false;
-    if (!(key in ITEM_PRICE_CENTS)) return false;
+  }
+  for (const key of Object.keys(d)) {
+    if (!ORDERABLE_ITEM_IDS.includes(key)) return false;
+  }
+  return true;
+}
+
+function validateChilis(
+  data: unknown,
+  quantities: Record<string, number>
+): data is Record<string, string[]> {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+
+  for (const id of ORDERABLE_ITEM_IDS) {
+    const raw = d[id];
+    if (!Array.isArray(raw)) return false;
+    const qty = quantities[id] ?? 0;
+    if (raw.length !== qty) return false;
+    for (const entry of raw) {
+      if (typeof entry !== "string" || !CHILI_NAMES.has(entry)) return false;
+    }
+  }
+
+  for (const key of Object.keys(d)) {
+    if (!ORDERABLE_ITEM_IDS.includes(key)) return false;
   }
   return true;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const VALID_PICKUPS = ["sabtu-metrotown", "minggu-iec"];
-
     const formData = await req.formData();
     const personalRaw = formData.get("personal") as string;
     const quantitiesRaw = formData.get("quantities") as string;
-    const pickupRaw = formData.get("pickup") as string;
+    const chilisRaw = formData.get("chilis") as string;
     const proof = formData.get("proof") as File | null;
 
-    if (!personalRaw || !quantitiesRaw || !pickupRaw || !proof) {
+    if (!personalRaw || !quantitiesRaw || !chilisRaw || !proof) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
-
-    if (!VALID_PICKUPS.includes(pickupRaw)) {
-      return NextResponse.json({ error: "Invalid pickup option" }, { status: 400 });
     }
 
     let personal: unknown;
     let quantities: unknown;
+    let chilis: unknown;
     try {
       personal = JSON.parse(personalRaw);
       quantities = JSON.parse(quantitiesRaw);
+      chilis = JSON.parse(chilisRaw);
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
@@ -83,6 +84,10 @@ export async function POST(req: NextRequest) {
     const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
     if (totalItems <= 0) {
       return NextResponse.json({ error: "Order must contain at least one item" }, { status: 400 });
+    }
+
+    if (!validateChilis(chilis, quantities)) {
+      return NextResponse.json({ error: "Invalid chili selections" }, { status: 400 });
     }
 
     if (proof.size > MAX_FILE_SIZE) {
@@ -117,27 +122,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const totalPrice = Object.entries(quantities)
-      .filter(([id]) => id in ITEM_PRICE_CENTS)
-      .reduce((sum, [id, qty]) => sum + qty * ITEM_PRICE_CENTS[id], 0);
+    const totalPrice = ORDERABLE_ITEM_IDS.reduce(
+      (sum, id) => sum + (quantities[id] ?? 0) * ITEM_PRICE_DOLLARS[id],
+      0
+    );
+
+    const qtyColumns = aggregateChilisToQtyRow(chilis);
 
     const { error: orderError } = await supabase.from("orders").insert({
       id: orderId,
       customer_name: personal.name.trim(),
       customer_email: personal.email.trim().toLowerCase(),
       customer_phone: personal.phone.trim(),
-      pickup_option: pickupRaw,
-      qty_nasi_bakar_ayam: quantities["nasi-bakar-ayam"] ?? 0,
-      qty_nasi_bakar_cumi: quantities["nasi-bakar-cumi"] ?? 0,
-      qty_nasi_bakar_rendang: quantities["nasi-bakar-rendang"] ?? 0,
-      qty_cendol: quantities["cendol"] ?? 0,
-      qty_nasi_bakar_cumi_and_cendol: quantities["nasi-bakar-cumi-and-cendol"] ?? 0,
-      qty_nasi_bakar_ayam_and_cendol: quantities["nasi-bakar-ayam-and-cendol"] ?? 0,
-      qty_nasi_bakar_rendang_and_cendol: quantities["nasi-bakar-rendang-and-cendol"] ?? 0,
-      qty_nasi_ulam_betawi: quantities["nasi-ulam-betawi"] ?? 0,
       total_price: totalPrice,
       proof_original_filename: originalFilename.slice(0, 512),
       proof_file_path: storagePath,
+      paid_rsvp: false,
+      ...qtyColumns,
     });
 
     if (orderError) {
@@ -148,6 +149,19 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    void sendOrderReceiptEmail({
+      kind: "food",
+      orderId,
+      customerName: personal.name.trim(),
+      customerEmail: personal.email.trim().toLowerCase(),
+      customerPhone: personal.phone.trim(),
+      totalPrice,
+      quantities,
+      chilis,
+    }).then((r) => {
+      if (!r.ok) console.warn("[api/order] Receipt email:", r.error);
+    });
 
     return NextResponse.json({ ok: true, order_id: orderId });
   } catch (e) {
