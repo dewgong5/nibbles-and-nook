@@ -13,6 +13,9 @@ import {
 const RECEIPT_EMAIL_FONT_FAMILY =
   "'Baby Doll','Trebuchet MS','Segoe UI',system-ui,sans-serif";
 
+const POPUP_ADDRESS = "6537 Telford Avenue";
+const POPUP_DATE_TIME = "April 11th, 4–9 PM";
+
 /** Display labels for receipt line items (kebab id → menu name). */
 const ITEM_LABELS: Record<string, string> = {
   "nasi-kulit-ayam": "Nasi Kulit Ayam",
@@ -122,7 +125,14 @@ export function buildReceiptPlainText(input: OrderReceiptEmailInput): string {
       lines.push(`    Chili: ${formatChiliBreakdown(chilis)}`);
     }
     lines.push("", `Total: ${formatMoney(input.totalPrice)}`);
-    lines.push("", "Thank you! We'll see you at the pop-up.");
+    lines.push(
+      "",
+      "Pop-up",
+      `  Place: ${POPUP_ADDRESS}`,
+      `  Time: ${POPUP_DATE_TIME}`,
+      "",
+      "Thank you! We'll see you at the pop-up."
+    );
   } else {
     lines.push(
       "RSVP",
@@ -130,7 +140,11 @@ export function buildReceiptPlainText(input: OrderReceiptEmailInput): string {
       "",
       "Your RSVP fee counts as pop-up credit on the day of the event.",
       "",
-      "Thank you! You're on the list."
+      "Pop-up",
+      `  Place: ${POPUP_ADDRESS}`,
+      `  Time: ${POPUP_DATE_TIME}`,
+      "",
+      "Thank you! We'll see you at the pop-up."
     );
   }
 
@@ -151,6 +165,13 @@ export function buildReceiptHtml(input: OrderReceiptEmailInput): string {
       ${escapeHtml(input.customerEmail)}<br/>
       ${escapeHtml(input.customerPhone)}
     </p>`;
+
+  const popupBlock = `
+    <div style="margin:16px 0 0;padding:12px 0;border-top:1px solid #e8dcc8;">
+      <p style="margin:0;font-family:${ff};font-size:14px;color:#D44A3D;"><strong>Pop-up</strong></p>
+      <p style="margin:8px 0 0;font-family:${ff};font-size:14px;color:#333;">Place: ${escapeHtml(POPUP_ADDRESS)}</p>
+      <p style="margin:4px 0 0;font-family:${ff};font-size:14px;color:#333;">Time: ${escapeHtml(POPUP_DATE_TIME)}</p>
+    </div>`;
 
   let bodyMain = "";
   if (input.kind === "food") {
@@ -179,12 +200,14 @@ export function buildReceiptHtml(input: OrderReceiptEmailInput): string {
         ${rows.join("")}
       </table>
       <p style="margin:16px 0 0;font-family:${ff};font-size:18px;color:#D44A3D;"><strong>Total: ${escapeHtml(formatMoney(input.totalPrice))}</strong></p>
+      ${popupBlock}
       <p style="margin:12px 0 0;font-family:${ff};font-size:14px;color:#333;">Thank you! We'll see you at the pop-up.</p>`;
   } else {
     bodyMain = `
       <p style="margin:12px 0;font-family:${ff};font-size:15px;color:#333;">RSVP fee: <strong>${escapeHtml(formatMoney(input.totalPrice))}</strong></p>
       <p style="margin:12px 0;font-family:${ff};font-size:14px;color:#555;">Your RSVP fee counts as pop-up credit on the day of the event.</p>
-      <p style="margin:12px 0;font-family:${ff};font-size:14px;color:#333;">Thank you! You're on the list.</p>`;
+      ${popupBlock}
+      <p style="margin:12px 0 0;font-family:${ff};font-size:14px;color:#333;">Thank you! You're on the list.</p>`;
   }
 
   return `<!DOCTYPE html>

@@ -256,7 +256,7 @@ export function OrderFlow() {
               <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
                 <li>From this website, you can choose two options:</li>
                 <li>1. RSVP for the pop-up</li>
-                <li>2. Pre-order food from the pop-up!</li>
+                <li>2. RSVP & pre-order food!</li>
               </ul>
             </div>
             <img src="/camera-girl.png" alt="Camera girl decoration" className="absolute right-0 bottom-0 w-[45%] sm:w-[200px] h-auto object-contain" />
@@ -588,27 +588,39 @@ export function OrderFlow() {
   return (
     <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
       <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4 text-center">
-        <img src="/logo-nnn.png" alt="Logo" className="w-[45%] mx-auto mb-2" />
+        <img src="/logo-nnn.png" alt="Logo" className="block w-[45%] mx-auto mb-2" />
         <h2 className="font-baby-doll text-[#D44A3D] text-2xl font-bold mb-5">
           {choice === "rsvp" ? "Thank you — you're RSVPed!" : "Thank you for your order!"}
         </h2>
-        <div className="font-baby-doll text-[#D44A3D] text-base leading-snug space-y-3 px-1 mb-1">
-          <p>
-            We&apos;ve sent your receipt to{" "}
-            <a href={`mailto:${personal.email}`} className="underline font-semibold break-words">
-              {personal.email}
-            </a>
-            .
+        <div className="font-baby-doll text-[#D44A3D] text-base leading-snug px-1">
+          <div className="space-y-3">
+            <p>
+              We&apos;ve sent your receipt to{" "}
+              <a href={`mailto:${personal.email}`} className="underline font-semibold break-words">
+                {personal.email}
+              </a>
+              .
+            </p>
+            <p>It can take up to 5 minutes. Please make sure to check spam or promotions too.</p>
+            <p>
+              If it doesn&apos;t show up, or if you have any other questions, contact Michael:{" "}
+              <a href="tel:+12368775949" className="underline whitespace-nowrap">
+                +1 (236) 877-5949
+              </a>
+            </p>
+          </div>
+          <p className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1">
+            <span className="font-bold block mb-0.5">Pop-up Location:</span>
+            Place: 6537 Telford Avenue
+            <br />
+            Time: April 11th, 4–9 PM
           </p>
-          <p>It can take up to 5 minutes. Please make sure to check spam or promotions too.</p>
-          <p>
-            If it doesn&apos;t show up, or if you have any other questions, contact Michael:{" "}
-            <a href="tel:+12368775949" className="underline whitespace-nowrap">
-              +1 (236) 877-5949
-            </a>
-          </p>
+          <img
+            src="/bye-group.png"
+            alt="Thanks"
+            className="block w-[75%] max-w-[260px] h-auto mx-auto mt-4 sm:mt-5"
+          />
         </div>
-        <img src="/bye-group.png" alt="Thanks" className="w-[75%] mx-auto mt-4" />
       </div>
     </main>
   );
