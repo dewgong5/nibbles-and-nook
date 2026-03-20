@@ -252,11 +252,16 @@ export function OrderFlow() {
           </div>
           <div className="relative px-1 sm:px-2 pb-2">
             <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[40%] sm:mr-[165px]">
-              <h2 className="font-baby-doll text-base sm:text-[20px] leading-none mb-2">For our next event, Nibbles and Nook is doing a pop-up!</h2>
-              <ul className="font-baby-doll text-sm sm:text-[18px] leading-[1.15] tracking-tight space-y-[1px]">
+              <h2 className="font-baby-doll text-base sm:text-lg leading-none mb-1.5">
+                For our next event, Nibbles and Nook is doing a pop-up!
+              </h2>
+              <ul className="font-baby-doll text-sm sm:text-base leading-[1.2] tracking-tight space-y-0.5">
                 <li>Time: April 11th, 4-9 PM</li>
-                <li>Location:  6537 Telford Avenue </li>
+                <li>Location: 6537 Telford Avenue</li>
               </ul>
+              <p className="mt-1.5 font-baby-doll text-xs sm:text-sm leading-snug opacity-95">
+                Note: If you pre-order, you won&apos;t need to pay the RSVP fee!
+              </p>
             </div>
             <img src="/camera-girl.png" alt="Camera girl decoration" className="absolute right-0 bottom-0 w-[45%] sm:w-[200px] h-auto object-contain" />
           </div>
@@ -613,12 +618,17 @@ export function OrderFlow() {
               </a>
             </p>
           </div>
-          <p className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1 text-lg sm:text-xl">
-            <span className="font-bold block mb-0.5">Pop-up Location:</span>
-            Place: 6537 Telford Avenue
-            <br />
-            Time: April 11th, 4–9 PM
-          </p>
+          <div className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1">
+            <p>
+              <span className="font-bold block mb-0.5">Pop-up Location:</span>
+              Place: 6537 Telford Avenue
+              <br />
+              Time: April 11th, 4–9 PM
+            </p>
+            <p className="mt-2 text-xs sm:text-sm opacity-90 leading-snug">
+              Note: If you pre-order, you won&apos;t need to pay the RSVP fee!
+            </p>
+          </div>
           <img
             src="/bye-group.png"
             alt="Thanks"
