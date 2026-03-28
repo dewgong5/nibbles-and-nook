@@ -518,10 +518,10 @@ export function OrderFlow() {
           {choice === "rsvp" && (
             <div className="mb-4 text-center space-y-2">
               <h3 className="font-baby-doll italic underline text-[#D44A3D] text-base sm:text-lg leading-snug px-1">
-                To reserve your spot, there is a small RSVP fee that will counts as credit for the event!
+                To reserve, there is a $5 redeemable deposit (for attendee commitment) which can be credited upon event attendance!
               </h3>
               <p className="font-baby-doll text-[#D44A3D] text-lg">
-                RSVP fee: ${DEFAULT_RSVP_PRICE_DOLLARS}
+                Redeemable RSVP deposit: ${DEFAULT_RSVP_PRICE_DOLLARS}
               </p>
             </div>
           )}
