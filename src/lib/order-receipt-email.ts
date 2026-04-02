@@ -23,6 +23,13 @@ const ITEM_LABELS: Record<string, string> = {
   "nasi-oseng-sapi": "Nasi Oseng Sapi",
 };
 
+const CHILI_TRANSLATIONS: Record<string, string> = {
+  "Cabe Ijo": "Green Chili Sambal",
+  "Sambal Matah": "Balinese Raw Shallot Sambal",
+  "Sambal Bawang": "Garlic-Shallot Sambal",
+  "Sambal Terasi": "Shrimp Paste Sambal",
+};
+
 export type OrderReceiptEmailInput =
   | {
       kind: "food";
@@ -84,7 +91,11 @@ function formatChiliBreakdown(chiliList: string[]): string {
   const counts: Record<string, number> = {};
   for (const name of chiliList) counts[name] = (counts[name] ?? 0) + 1;
   return Object.entries(counts)
-    .map(([name, count]) => `${name} (${count})`)
+    .map(([name, count]) => {
+      const translated = CHILI_TRANSLATIONS[name];
+      const label = translated ? `${name} - ${translated}` : name;
+      return `${label} (${count})`;
+    })
     .join(", ");
 }
 

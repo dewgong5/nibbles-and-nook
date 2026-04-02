@@ -12,12 +12,20 @@ const CHILI_OPTIONS = [
   "Sambal Terasi"
 ] as const;
 
+const CHILI_TRANSLATIONS: Record<(typeof CHILI_OPTIONS)[number], string> = {
+  "Cabe Ijo": "Green Chili Sambal",
+  "Sambal Matah": "Balinese Raw Shallot Sambal",
+  "Sambal Bawang": "Garlic-Shallot Sambal",
+  "Sambal Terasi": "Shrimp Paste Sambal",
+};
+
 const ORDERABLE_ITEMS = [
-  { id: "nasi-kulit-ayam", name: "Nasi Kulit Ayam", price: 11 },
-  { id: "nasi-ayam-geprek", name: "Nasi Ayam Geprek", price: 13 },
-  { id: "nasi-oseng-sapi", name: "Nasi Oseng Sapi", price: 15 },
+  { id: "nasi-kulit-ayam", name: "Nasi Kulit Ayam", translated: "Chicken Skin with Rice", price: 11 },
+  { id: "nasi-ayam-geprek", name: "Nasi Ayam Geprek", translated: "Smashed Fried Chicken Rice", price: 13 },
+  { id: "nasi-oseng-sapi", name: "Nasi Oseng Sapi", translated: "Stir-Fried Beef with Rice", price: 15 },
 ] as const;
 
+type Language = "id" | "en";
 type Step = "landing" | "personal" | "select" | "order" | "payment" | "confirmation";
 
 interface PersonalInfo {
@@ -44,6 +52,7 @@ const STEPS: Step[] = ["landing", "personal", "select", "order", "payment", "con
 export function OrderFlow() {
   const [step, setStep] = useState<Step>("landing");
   const [choice, setChoice] = useState<"rsvp" | "order" | "">("");
+  const [language, setLanguage] = useState<Language | null>(null);
   const [personal, setPersonal] = useState<PersonalInfo>({
     name: "",
     email: "",
@@ -67,6 +76,12 @@ export function OrderFlow() {
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+  const getItemLabel = (item: (typeof ORDERABLE_ITEMS)[number]) =>
+    language === "en" ? item.translated : item.name;
+
+  const getChiliLabel = (name: (typeof CHILI_OPTIONS)[number]) =>
+    language === "en" ? CHILI_TRANSLATIONS[name] : name;
+
   const getChiliDisplayString = (itemId: string) => {
     const list = chilis[itemId] || [];
     if (list.length === 0) return "";
@@ -77,7 +92,7 @@ export function OrderFlow() {
     }, {} as Record<string, number>);
 
     return Object.entries(counts)
-      .map(([name, count]) => `${name} (${count})`)
+      .map(([name, count]) => `${getChiliLabel(name as (typeof CHILI_OPTIONS)[number])} (${count})`)
       .join(", ");
   };
 
@@ -410,23 +425,32 @@ export function OrderFlow() {
     return (
       <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
         <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
-          <div className="flex justify-center mb-2">
+          <div className="relative flex justify-center mb-2">
             <img src="/logo-nnn.png" alt="Logo" className="w-[45%] max-w-[180px]" />
+            {language && (
+              <button
+                type="button"
+                onClick={() => setLanguage(null)}
+                className="absolute right-0 top-0 rounded-full border border-[#D44A3D] px-3 py-1 font-baby-doll text-sm text-[#D44A3D]"
+              >
+                {language === "en" ? "EN" : "ID"}
+              </button>
+            )}
           </div>
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">Tell us your order, {personal.name || "there"}!</h2>
           <div className="space-y-4">
             {ORDERABLE_ITEMS.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-3">
+              <div key={item.id} className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">{item.name}:</p>
+                  <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">{getItemLabel(item)}:</p>
                   <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">(${item.price})</p>
                   {getChiliDisplayString(item.id) && (
                     <p className="font-baby-doll text-[#D44A3D] text-sm italic mt-1 bg-[#D44A3D]/5 inline-block px-2 rounded">
-                      Chili: {getChiliDisplayString(item.id)}
+                      {language === "en" ? "Chili" : "Sambal"}: {getChiliDisplayString(item.id)}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1 pt-1">
                   <button onClick={() => removeQuantity(item.id)} className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold">−</button>
                   <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold flex items-center justify-center">{quantities[item.id] ?? 0}</span>
                   <button onClick={() => addQuantity(item.id)} className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold">+</button>
@@ -449,7 +473,7 @@ export function OrderFlow() {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="w-full max-w-sm bg-[var(--cream)] rounded-3xl p-6 border-2 shadow-2xl" style={{ borderColor: RED }}>
               <h3 className="font-baby-doll text-[#D44A3D] text-xl font-bold mb-4 text-center">
-                Pick a chili for portion #{(chilis[activeChiliModal]?.length || 0) + 1} of {ORDERABLE_ITEMS.find(i => i.id === activeChiliModal)?.name}!
+                {language === "en" ? "Pick a chili" : "Pilih sambal"} for portion #{(chilis[activeChiliModal]?.length || 0) + 1} of {getItemLabel(ORDERABLE_ITEMS.find(i => i.id === activeChiliModal)!)}!
               </h3>
               <div className="grid grid-cols-1 gap-2">
                 {CHILI_OPTIONS.map(opt => (
@@ -458,9 +482,33 @@ export function OrderFlow() {
                     onClick={() => handleChiliSelect(activeChiliModal, opt)}
                     className="w-full py-3 rounded-2xl bg-[#D44A3D] text-white font-baby-doll text-lg hover:opacity-90"
                   >
-                    {opt}
+                    {getChiliLabel(opt)}
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {!language && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-xs rounded-3xl bg-[var(--cream)] p-6 text-center shadow-2xl border-2" style={{ borderColor: RED }}>
+              <h3 className="font-baby-doll text-[#D44A3D] text-xl mb-2">Choose your language</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLanguage("en")}
+                  className="rounded-2xl bg-[#D44A3D] px-4 py-3 font-baby-doll text-lg text-[#fff4dd]"
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("id")}
+                  className="rounded-2xl border-2 px-4 py-3 font-baby-doll text-lg text-[#D44A3D]"
+                  style={{ borderColor: RED }}
+                >
+                  Indonesia
+                </button>
               </div>
             </div>
           </div>
