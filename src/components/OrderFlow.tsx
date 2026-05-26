@@ -1,32 +1,22 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { DEFAULT_RSVP_PRICE_DOLLARS } from "@/lib/orders-schema";
+import {
+  ALL_MENU_ITEMS,
+  calculateOrderTotalCents,
+  DEFAULT_RSVP_PRICE_DOLLARS,
+  formatPrice,
+  MAIN_DISH_ITEMS,
+  type MenuItemDef,
+  PASTRY_ITEMS,
+  SAMBAL_ITEMS,
+  SATE_ITEMS,
+} from "@/lib/orders-schema";
 
 const RED = "#D44A3D";
 
-const CHILI_OPTIONS = [
-  "Cabe Ijo",
-  "Sambal Matah",
-  "Sambal Bawang",
-  "Sambal Terasi"
-] as const;
-
-const CHILI_TRANSLATIONS: Record<(typeof CHILI_OPTIONS)[number], string> = {
-  "Cabe Ijo": "Green Chili Sambal",
-  "Sambal Matah": "Balinese Raw Shallot Sambal",
-  "Sambal Bawang": "Garlic-Shallot Sambal",
-  "Sambal Terasi": "Shrimp Paste Sambal",
-};
-
-const ORDERABLE_ITEMS = [
-  { id: "nasi-kulit-ayam", name: "Nasi Kulit Ayam", translated: "Chicken Skin with Rice", price: 11 },
-  { id: "nasi-ayam-geprek", name: "Nasi Ayam Geprek", translated: "Smashed Fried Chicken Rice", price: 13 },
-  { id: "nasi-oseng-sapi", name: "Nasi Oseng Sapi", translated: "Stir-Fried Beef with Rice", price: 15 },
-] as const;
-
 type Language = "id" | "en";
-type Step = "landing" | "personal" | "select" | "order" | "payment" | "confirmation";
+type Step = "landing" | "personal" | "select" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
 
 interface PersonalInfo {
   name: string;
@@ -38,16 +28,12 @@ interface OrderQuantities {
   [key: string]: number;
 }
 
-interface OrderChilis {
-  [key: string]: string[];
-}
-
 const PICKUP_OPTIONS = [
   { id: "sabtu-metrotown", label: "Saturday, 7th March — Metrotown", time: "5:00 – 6:00 PM" },
   { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church", time: "11:30 AM – 12:00 PM" },
 ] as const;
 
-const STEPS: Step[] = ["landing", "personal", "select", "order", "payment", "confirmation"];
+const STEPS: Step[] = ["landing", "personal", "select", "order", "sate", "sambal", "pastries", "payment", "confirmation"];
 
 export function OrderFlow() {
   const [step, setStep] = useState<Step>("landing");
@@ -59,13 +45,8 @@ export function OrderFlow() {
     phone: "",
   });
   const [quantities, setQuantities] = useState<OrderQuantities>(() =>
-    ORDERABLE_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {})
+    ALL_MENU_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {})
   );
-  const [chilis, setChilis] = useState<OrderChilis>(() =>
-    ORDERABLE_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: [] }), {})
-  );  
-  const [activeChiliModal, setActiveChiliModal] = useState<string | null>(null);
-
   const [pickup, setPickup] = useState("");
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,25 +57,21 @@ export function OrderFlow() {
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-  const getItemLabel = (item: (typeof ORDERABLE_ITEMS)[number]) =>
+  const getItemLabel = (item: MenuItemDef) =>
     language === "en" ? item.translated : item.name;
 
-  const getChiliLabel = (name: (typeof CHILI_OPTIONS)[number]) =>
-    language === "en" ? CHILI_TRANSLATIONS[name] : name;
-
-  const getChiliDisplayString = (itemId: string) => {
-    const list = chilis[itemId] || [];
-    if (list.length === 0) return "";
-    
-    const counts = list.reduce((acc, name) => {
-      acc[name] = (acc[name] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(counts)
-      .map(([name, count]) => `${getChiliLabel(name as (typeof CHILI_OPTIONS)[number])} (${count})`)
-      .join(", ");
-  };
+  const mainDishSectionTitle = language === "en" ? "Main dish" : "Hidangan utama";
+  const sateSectionTitle = "Sate";
+  const sambalSectionTitle = language === "en" ? "Extra sambal" : "Sambal tambahan";
+  const freeSambalNote =
+    language === "en"
+      ? "Every nasi comes with one free sambal."
+      : "Setiap nasi sudah termasuk satu sambal gratis.";
+  const extraSambalNote =
+    language === "en"
+      ? "Add-on jars — separate from the free sambal included with each nasi."
+      : "Sambal tambahan — terpisah dari sambal gratis setiap nasi.";
+  const pastriesSectionTitle = language === "en" ? "Pastries" : "Pastry";
 
   const validateStep = useCallback((): string | null => {
     if (step === "personal") {
@@ -107,14 +84,9 @@ export function OrderFlow() {
     if (step === "select") {
       if (!choice) return "Please select an option to continue.";
     }
-    if (step === "order") {
+    if (step === "payment" && choice === "order") {
       const total = Object.values(quantities).reduce((a, b) => a + b, 0);
       if (total <= 0) return "Please add at least one item to your order.";
-      for (const item of ORDERABLE_ITEMS) {
-        if (quantities[item.id] > (chilis[item.id]?.length || 0)) {
-          return `Please finish selecting chili for all ${item.name} portions.`;
-        }
-      }
     }
     // if (step === "pickup") {
     //   if (!pickup) return "Please select a pickup option.";
@@ -124,7 +96,7 @@ export function OrderFlow() {
       if (paymentFile.size > MAX_FILE_SIZE) return "File is too large (max 10 MB).";
     }
     return null;
-  }, [step, personal, choice, quantities, chilis, pickup, paymentFile]);
+  }, [step, personal, choice, quantities, pickup, paymentFile]);
 
   const goNext = useCallback(async () => {
     const err = validateStep();
@@ -153,7 +125,6 @@ export function OrderFlow() {
         const url = choice === "rsvp" ? "/api/rsvp" : "/api/order";
         if (choice === "order") {
           form.append("quantities", JSON.stringify({ ...quantities }));
-          form.append("chilis", JSON.stringify({ ...chilis }));
           form.append("pickup", pickup);
         }
         const res = await fetch(url, {
@@ -176,7 +147,7 @@ export function OrderFlow() {
 
     const i = STEPS.indexOf(step);
     if (i < STEPS.length - 1) setStep(STEPS[i + 1]!);
-  }, [step, personal, choice, quantities, chilis, pickup, paymentFile, validateStep]);
+  }, [step, personal, choice, quantities, pickup, paymentFile, validateStep]);
 
   const goPrev = useCallback(() => {
     setErrorMsg("");
@@ -184,72 +155,174 @@ export function OrderFlow() {
       setStep("select");
       return;
     }
+    if (step === "sate") {
+      setStep("order");
+      return;
+    }
+    if (step === "sambal") {
+      setStep("sate");
+      return;
+    }
+    if (step === "pastries") {
+      setStep("sambal");
+      return;
+    }
     if (step === "payment" && choice === "rsvp") {
       setStep("select");
+      return;
+    }
+    if (step === "payment" && choice === "order") {
+      setStep("pastries");
       return;
     }
     const i = STEPS.indexOf(step);
     if (i > 0) setStep(STEPS[i - 1]!);
   }, [step, choice]);
 
-  const setQuantity = useCallback((id: string, delta: number) => {
-    setQuantities((q) => {
-      const newVal = Math.max(0, (q[id] ?? 0) + delta);
-      if (newVal > 0 && (q[id] ?? 0) === 0) {
-        setActiveChiliModal(id);
-      }
-      return { ...q, [id]: newVal };
-    });
-  }, []);
-
   const addQuantity = useCallback((id: string) => {
-  setQuantities((q) => {
-    const newQty = (q[id] ?? 0) + 1;
-
-    setChilis(prev => {
-      const chiliList = prev[id] ?? [];
-
-      if (chiliList.length < newQty) {
-        setActiveChiliModal(id);
-      }
-
-      return prev;
-    });
-
-    return { ...q, [id]: newQty };
-  });
+    setQuantities((q) => ({ ...q, [id]: (q[id] ?? 0) + 1 }));
   }, []);
 
   const removeQuantity = useCallback((id: string) => {
-  setQuantities((q) => {
-    const current = q[id] ?? 0;
-    if (current === 0) return q;
-
-    const newQuantity = current - 1;
-
-    setChilis(prev => {
-      const currentChilis = prev[id] ?? [];
-      return {
-        ...prev,
-        [id]: currentChilis.slice(0, newQuantity)
-      };
-    });
-
-    return { ...q, [id]: newQuantity };
-  });
+    setQuantities((q) => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) - 1) }));
   }, []);
 
-  const handleChiliSelect = (itemId: string, chiliName: string) => {
-    setChilis(prev => ({
-      ...prev,
-      [itemId]: [...prev[itemId], chiliName]
-    }));
-    setActiveChiliModal(null);
-  };
+  const orderTotalCents = calculateOrderTotalCents(quantities);
 
-  const orderTotal = ORDERABLE_ITEMS.reduce(
-    (sum, item) => sum + (quantities[item.id] ?? 0) * item.price,
-    0
+  const renderQuantityMenuPage = (
+    items: MenuItemDef[],
+    options: {
+      sectionTitle?: string;
+      sectionNote?: string;
+    } = {}
+  ) => (
+    <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+      <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+        <div className="relative flex justify-center mb-2">
+          <img src="/logo-nnn.png" alt="Logo" className="w-[45%] max-w-[180px]" />
+          {language && (
+            <button
+              type="button"
+              onClick={() => setLanguage(null)}
+              className="absolute right-0 top-0 rounded-full border border-[#D44A3D] px-3 py-1 font-baby-doll text-sm text-[#D44A3D]"
+            >
+              {language === "en" ? "EN" : "ID"}
+            </button>
+          )}
+        </div>
+        <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
+          Tell us your order, {personal.name || "there"}!
+        </h2>
+        {language && options.sectionTitle && (
+          <>
+            <h3 className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold mb-2 border-b border-[#D44A3D]/20 pb-2">
+              {options.sectionTitle}
+            </h3>
+            {options.sectionNote && (
+              <p className="font-baby-doll text-[#D44A3D] text-sm sm:text-base italic mb-4 bg-[#D44A3D]/5 rounded-xl px-3 py-2 leading-snug">
+                {options.sectionNote}
+              </p>
+            )}
+          </>
+        )}
+        <div className="space-y-4">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">
+                  {language ? `${getItemLabel(item)}:` : item.name}
+                </p>
+                <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">
+                  ({formatPrice(item.priceCents)}
+                  {item.portionNote && language
+                    ? ` / ${language === "en" ? item.portionNote.en : item.portionNote.id}`
+                    : item.portionNote
+                      ? ` / ${item.portionNote.en}`
+                      : ""}
+                  )
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1 pt-1">
+                <button
+                  type="button"
+                  onClick={() => removeQuantity(item.id)}
+                  className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
+                >
+                  −
+                </button>
+                <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold flex items-center justify-center">
+                  {quantities[item.id] ?? 0}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => addQuantity(item.id)}
+                  className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-right mt-4">
+          Total: {formatPrice(orderTotalCents)}
+        </p>
+        {errorMsg && (
+          <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">
+            {errorMsg}
+          </p>
+        )}
+        <div className="relative mt-3">
+          <img src="/rabbit-waiter.png" alt="Waiter" className="w-[40%] max-w-[160px]" />
+          <div className="absolute bottom-2 right-0 flex gap-2">
+            <button
+              type="button"
+              onClick={goPrev}
+              className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D]"
+              style={{ borderColor: RED }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd]"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!language && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div
+            className="w-full max-w-xs rounded-3xl bg-[var(--cream)] p-6 text-center shadow-2xl border-2"
+            style={{ borderColor: RED }}
+          >
+            <h3 className="font-baby-doll text-[#D44A3D] text-xl mb-2">Choose your language</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className="rounded-2xl bg-[#D44A3D] px-4 py-3 font-baby-doll text-lg text-[#fff4dd]"
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("id")}
+                className="rounded-2xl border-2 px-4 py-3 font-baby-doll text-lg text-[#D44A3D]"
+                style={{ borderColor: RED }}
+              >
+                Indonesia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </main>
   );
 
   if (step === "landing") {
@@ -422,99 +495,29 @@ export function OrderFlow() {
   }
 
   if (step === "order") {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
-        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
-          <div className="relative flex justify-center mb-2">
-            <img src="/logo-nnn.png" alt="Logo" className="w-[45%] max-w-[180px]" />
-            {language && (
-              <button
-                type="button"
-                onClick={() => setLanguage(null)}
-                className="absolute right-0 top-0 rounded-full border border-[#D44A3D] px-3 py-1 font-baby-doll text-sm text-[#D44A3D]"
-              >
-                {language === "en" ? "EN" : "ID"}
-              </button>
-            )}
-          </div>
-          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">Tell us your order, {personal.name || "there"}!</h2>
-          <div className="space-y-4">
-            {ORDERABLE_ITEMS.map((item) => (
-              <div key={item.id} className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">{getItemLabel(item)}:</p>
-                  <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">(${item.price})</p>
-                  {getChiliDisplayString(item.id) && (
-                    <p className="font-baby-doll text-[#D44A3D] text-sm italic mt-1 bg-[#D44A3D]/5 inline-block px-2 rounded">
-                      {language === "en" ? "Chili" : "Sambal"}: {getChiliDisplayString(item.id)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1 pt-1">
-                  <button onClick={() => removeQuantity(item.id)} className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold">−</button>
-                  <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold flex items-center justify-center">{quantities[item.id] ?? 0}</span>
-                  <button onClick={() => addQuantity(item.id)} className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold">+</button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-right mt-4">Total: ${orderTotal}</p>
-          {errorMsg && <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>}
-          <div className="relative mt-3">
-            <img src="/rabbit-waiter.png" alt="Waiter" className="w-[40%] max-w-[160px]" />
-            <div className="absolute bottom-2 right-0 flex gap-2">
-              <button onClick={goPrev} className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D]" style={{ borderColor: RED }}>Back</button>
-              <button onClick={goNext} className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd]">Next</button>
-            </div>
-          </div>
-        </div>
+    return renderQuantityMenuPage(MAIN_DISH_ITEMS, {
+      sectionTitle: language ? mainDishSectionTitle : undefined,
+      sectionNote: language ? freeSambalNote : undefined,
+    });
+  }
 
-        {activeChiliModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-sm bg-[var(--cream)] rounded-3xl p-6 border-2 shadow-2xl" style={{ borderColor: RED }}>
-              <h3 className="font-baby-doll text-[#D44A3D] text-xl font-bold mb-4 text-center">
-                {language === "en" ? "Pick a chili" : "Pilih sambal"} for portion #{(chilis[activeChiliModal]?.length || 0) + 1} of {getItemLabel(ORDERABLE_ITEMS.find(i => i.id === activeChiliModal)!)}!
-              </h3>
-              <div className="grid grid-cols-1 gap-2">
-                {CHILI_OPTIONS.map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => handleChiliSelect(activeChiliModal, opt)}
-                    className="w-full py-3 rounded-2xl bg-[#D44A3D] text-white font-baby-doll text-lg hover:opacity-90"
-                  >
-                    {getChiliLabel(opt)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {!language && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-xs rounded-3xl bg-[var(--cream)] p-6 text-center shadow-2xl border-2" style={{ borderColor: RED }}>
-              <h3 className="font-baby-doll text-[#D44A3D] text-xl mb-2">Choose your language</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setLanguage("en")}
-                  className="rounded-2xl bg-[#D44A3D] px-4 py-3 font-baby-doll text-lg text-[#fff4dd]"
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage("id")}
-                  className="rounded-2xl border-2 px-4 py-3 font-baby-doll text-lg text-[#D44A3D]"
-                  style={{ borderColor: RED }}
-                >
-                  Indonesia
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-    );
+  if (step === "sate") {
+    return renderQuantityMenuPage(SATE_ITEMS, {
+      sectionTitle: language ? sateSectionTitle : undefined,
+    });
+  }
+
+  if (step === "sambal") {
+    return renderQuantityMenuPage(SAMBAL_ITEMS, {
+      sectionTitle: language ? sambalSectionTitle : undefined,
+      sectionNote: language ? extraSambalNote : undefined,
+    });
+  }
+
+  if (step === "pastries") {
+    return renderQuantityMenuPage(PASTRY_ITEMS, {
+      sectionTitle: language ? pastriesSectionTitle : undefined,
+    });
   }
 
   // if (step === "pickup") {
@@ -556,11 +559,11 @@ export function OrderFlow() {
             <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
           </div>
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
-            Please attach proof of payment here! For etransfers, please send to nathan.tedjo@gmail.com
+            Please attach proof of payment here! For etransfers, send to joachimkenneth@wealthsimple.me
           </h2>
           {choice === "order" && (
             <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-4">
-              Total: ${orderTotal}
+              Total: {formatPrice(orderTotalCents)}
             </p>
           )}
           {choice === "rsvp" && (

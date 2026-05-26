@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import {
-  ITEM_PRICE_DOLLARS,
+  ALL_MENU_ITEMS,
+  formatPrice,
+  ITEM_PRICE_CENTS,
   ORDERABLE_ITEM_IDS,
 } from "@/lib/orders-schema";
 
@@ -16,19 +18,9 @@ const RECEIPT_EMAIL_FONT_FAMILY =
 const POPUP_ADDRESS = "6537 Telford Avenue";
 const POPUP_DATE_TIME = "April 11th, 4–9 PM";
 
-/** Display labels for receipt line items (kebab id → menu name). */
-const ITEM_LABELS: Record<string, string> = {
-  "nasi-kulit-ayam": "Nasi Kulit Ayam",
-  "nasi-ayam-geprek": "Nasi Ayam Geprek",
-  "nasi-oseng-sapi": "Nasi Oseng Sapi",
-};
-
-const CHILI_TRANSLATIONS: Record<string, string> = {
-  "Cabe Ijo": "Green Chili Sambal",
-  "Sambal Matah": "Balinese Raw Shallot Sambal",
-  "Sambal Bawang": "Garlic-Shallot Sambal",
-  "Sambal Terasi": "Shrimp Paste Sambal",
-};
+const ITEM_LABELS: Record<string, string> = Object.fromEntries(
+  ALL_MENU_ITEMS.map((item) => [item.id, item.name])
+);
 
 export type OrderReceiptEmailInput =
   | {
@@ -37,9 +29,8 @@ export type OrderReceiptEmailInput =
       customerName: string;
       customerEmail: string;
       customerPhone: string;
-      totalPrice: number;
+      totalPriceCents: number;
       quantities: Record<string, number>;
-      chilis: Record<string, string[]>;
     }
   | {
       kind: "rsvp";
@@ -86,20 +77,7 @@ function receiptFontFaceHead(): string {
 </style>`;
 }
 
-function formatChiliBreakdown(chiliList: string[]): string {
-  if (chiliList.length === 0) return "—";
-  const counts: Record<string, number> = {};
-  for (const name of chiliList) counts[name] = (counts[name] ?? 0) + 1;
-  return Object.entries(counts)
-    .map(([name, count]) => {
-      const translated = CHILI_TRANSLATIONS[name];
-      const label = translated ? `${name} - ${translated}` : name;
-      return `${label} (${count})`;
-    })
-    .join(", ");
-}
-
-function formatMoney(n: number): string {
+function formatMoneyDollars(n: number): string {
   return `$${n}`;
 }
 
@@ -130,12 +108,11 @@ export function buildReceiptPlainText(input: OrderReceiptEmailInput): string {
       const qty = input.quantities[id] ?? 0;
       if (qty <= 0) continue;
       const label = ITEM_LABELS[id] ?? id;
-      const unit = ITEM_PRICE_DOLLARS[id] ?? 0;
-      const chilis = input.chilis[id] ?? [];
-      lines.push(`  ${label} × ${qty} @ ${formatMoney(unit)} = ${formatMoney(qty * unit)}`);
-      lines.push(`    Chili: ${formatChiliBreakdown(chilis)}`);
+      const unitCents = ITEM_PRICE_CENTS[id] ?? 0;
+      const lineCents = qty * unitCents;
+      lines.push(`  ${label} × ${qty} @ ${formatPrice(unitCents)} = ${formatPrice(lineCents)}`);
     }
-    lines.push("", `Total: ${formatMoney(input.totalPrice)}`);
+    lines.push("", `Total: ${formatPrice(input.totalPriceCents)}`);
     lines.push(
       "",
       "Pop-up",
@@ -147,7 +124,7 @@ export function buildReceiptPlainText(input: OrderReceiptEmailInput): string {
   } else {
     lines.push(
       "RSVP",
-      `  Fee: ${formatMoney(input.totalPrice)}`,
+      `  Fee: ${formatMoneyDollars(input.totalPrice)}`,
       "",
       "Your RSVP fee counts as pop-up credit on the day of the event.",
       "",
@@ -191,18 +168,16 @@ export function buildReceiptHtml(input: OrderReceiptEmailInput): string {
       const qty = input.quantities[id] ?? 0;
       if (qty <= 0) continue;
       const label = ITEM_LABELS[id] ?? id;
-      const unit = ITEM_PRICE_DOLLARS[id] ?? 0;
-      const lineTotal = qty * unit;
-      const chiliText = formatChiliBreakdown(input.chilis[id] ?? []);
+      const unitCents = ITEM_PRICE_CENTS[id] ?? 0;
+      const lineCents = qty * unitCents;
       rows.push(`
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #e8dcc8;font-family:${ff};font-size:14px;color:#333;">
-            ${escapeHtml(label)} × ${qty}<br/>
-            <span style="font-size:12px;color:#666;">Chili: ${escapeHtml(chiliText)}</span>
+            ${escapeHtml(label)} × ${qty}
           </td>
           <td style="padding:10px 8px;border-bottom:1px solid #e8dcc8;text-align:right;font-family:${ff};font-size:14px;color:#333;">
-            ${escapeHtml(formatMoney(unit))} each<br/>
-            <strong>${escapeHtml(formatMoney(lineTotal))}</strong>
+            ${escapeHtml(formatPrice(unitCents))} each<br/>
+            <strong>${escapeHtml(formatPrice(lineCents))}</strong>
           </td>
         </tr>`);
     }
@@ -210,12 +185,12 @@ export function buildReceiptHtml(input: OrderReceiptEmailInput): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;">
         ${rows.join("")}
       </table>
-      <p style="margin:16px 0 0;font-family:${ff};font-size:18px;color:#D44A3D;"><strong>Total: ${escapeHtml(formatMoney(input.totalPrice))}</strong></p>
+      <p style="margin:16px 0 0;font-family:${ff};font-size:18px;color:#D44A3D;"><strong>Total: ${escapeHtml(formatPrice(input.totalPriceCents))}</strong></p>
       ${popupBlock}
       <p style="margin:12px 0 0;font-family:${ff};font-size:14px;color:#333;">Thank you! We'll see you at the pop-up.</p>`;
   } else {
     bodyMain = `
-      <p style="margin:12px 0;font-family:${ff};font-size:15px;color:#333;">RSVP fee: <strong>${escapeHtml(formatMoney(input.totalPrice))}</strong></p>
+      <p style="margin:12px 0;font-family:${ff};font-size:15px;color:#333;">RSVP fee: <strong>${escapeHtml(formatMoneyDollars(input.totalPrice))}</strong></p>
       <p style="margin:12px 0;font-family:${ff};font-size:14px;color:#555;">Your RSVP fee counts as pop-up credit on the day of the event.</p>
       ${popupBlock}
       <p style="margin:12px 0 0;font-family:${ff};font-size:14px;color:#333;">Thank you! You're on the list.</p>`;

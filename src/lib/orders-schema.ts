@@ -1,58 +1,171 @@
 /** Fallback RSVP fee (whole dollars). Override with RSVP_PRICE_DOLLARS on the server. */
 export const DEFAULT_RSVP_PRICE_DOLLARS = 5;
 
-/** Matches OrderFlow ORDERABLE_ITEMS (prices in whole dollars). */
-export const ITEM_PRICE_DOLLARS: Record<string, number> = {
-  "nasi-kulit-ayam": 11,
-  "nasi-ayam-geprek": 13,
-  "nasi-oseng-sapi": 15,
-};
+export interface MenuItemDef {
+  id: string;
+  name: string;
+  translated: string;
+  priceCents: number;
+  qtyColumn: string;
+  portionNote?: { id: string; en: string };
+}
 
-export const ORDERABLE_ITEM_IDS = Object.keys(ITEM_PRICE_DOLLARS);
+export const MAIN_DISH_ITEMS: MenuItemDef[] = [
+  {
+    id: "nasi-bakar-ayam-kemangi",
+    name: "Nasi Bakar Ayam Kemangi",
+    translated: "Grilled Rice with Basil Chicken",
+    priceCents: 1300,
+    qtyColumn: "qty_nasi_bakar_ayam_kemangi",
+  },
+  {
+    id: "nasi-bakar-cumi",
+    name: "Nasi Bakar Cumi",
+    translated: "Grilled Rice with Squid",
+    priceCents: 1400,
+    qtyColumn: "qty_nasi_bakar_cumi",
+  },
+  {
+    id: "nasi-bakar-ikan",
+    name: "Nasi Bakar Ikan (Tuna)",
+    translated: "Grilled Rice with Tuna",
+    priceCents: 1300,
+    qtyColumn: "qty_nasi_bakar_ikan",
+  },
+];
 
-/** Matches OrderFlow CHILI_OPTIONS — maps to DB column suffixes. */
-export const CHILI_TO_SUFFIX: Record<string, string> = {
-  "Cabe Ijo": "cabe_ijo",
-  "Sambal Matah": "sambal_matah",
-  "Sambal Bawang": "sambal_bawang",
-  "Sambal Terasi": "sambal_terasi",
-};
+export const SATE_ITEMS: MenuItemDef[] = [
+  {
+    id: "sate-quail-eggs",
+    name: "Sate Telur Puyuh",
+    translated: "Quail Egg Satay",
+    priceCents: 250,
+    qtyColumn: "qty_sate_quail_eggs",
+  },
+  {
+    id: "sate-kulit",
+    name: "Sate Kulit",
+    translated: "Chicken Skin Satay",
+    priceCents: 250,
+    qtyColumn: "qty_sate_kulit",
+  },
+];
 
-export const CHILI_NAMES = new Set(Object.keys(CHILI_TO_SUFFIX));
+export const SAMBAL_ITEMS: MenuItemDef[] = [
+  {
+    id: "sambel-bawang",
+    name: "Sambel Bawang",
+    translated: "Garlic-Shallot Sambal",
+    priceCents: 900,
+    qtyColumn: "qty_sambel_bawang",
+  },
+  {
+    id: "sambel-ijo",
+    name: "Sambel Ijo",
+    translated: "Green Chili Sambal",
+    priceCents: 900,
+    qtyColumn: "qty_sambel_ijo",
+  },
+  {
+    id: "sambel-matah",
+    name: "Sambel Matah",
+    translated: "Balinese Raw Shallot Sambal",
+    priceCents: 900,
+    qtyColumn: "qty_sambel_matah",
+  },
+];
 
-/** Item id (kebab) → DB column prefix after qty_. */
-export const ITEM_ID_TO_DB_PREFIX: Record<string, string> = {
-  "nasi-kulit-ayam": "nasi_kulit_ayam",
-  "nasi-ayam-geprek": "nasi_ayam_geprek",
-  "nasi-oseng-sapi": "nasi_oseng_sapi",
-};
+export const PASTRY_ITEMS: MenuItemDef[] = [
+  {
+    id: "klepon",
+    name: "Klepon",
+    translated: "Klepon",
+    priceCents: 450,
+    qtyColumn: "qty_klepon",
+    portionNote: { id: "4 potong", en: "4 pieces" },
+  },
+  {
+    id: "nama-donut-earl-grey",
+    name: "Donut Earl Grey",
+    translated: "Donut Earl Grey",
+    priceCents: 450,
+    qtyColumn: "qty_nama_donut_earl_grey",
+  },
+  {
+    id: "nama-donut-mocha-nougat",
+    name: "Donut Mocha Nougat",
+    translated: "Donut Mocha Nougat",
+    priceCents: 450,
+    qtyColumn: "qty_nama_donut_mocha_nougat",
+  },
+  {
+    id: "nama-donut-mango-pomelo-sago",
+    name: "Donut Mango Pomelo Sago",
+    translated: "Donut Mango Pomelo Sago",
+    priceCents: 500,
+    qtyColumn: "qty_nama_donut_mango_pomelo_sago",
+  },
+  {
+    id: "butter-tteok",
+    name: "Butter Tteok",
+    translated: "Butter Tteok",
+    priceCents: 550,
+    qtyColumn: "qty_butter_tteok",
+    portionNote: { id: "4 potong", en: "4 pieces" },
+  },
+];
+
+export const ALL_MENU_ITEMS: MenuItemDef[] = [
+  ...MAIN_DISH_ITEMS,
+  ...SATE_ITEMS,
+  ...SAMBAL_ITEMS,
+  ...PASTRY_ITEMS,
+];
+
+/** Prices in cents (e.g. 250 = $2.50). */
+export const ITEM_PRICE_CENTS: Record<string, number> = Object.fromEntries(
+  ALL_MENU_ITEMS.map((item) => [item.id, item.priceCents])
+);
+
+export const ORDERABLE_ITEM_IDS = ALL_MENU_ITEMS.map((item) => item.id);
+
+export const ITEM_ID_TO_QTY_COLUMN: Record<string, string> = Object.fromEntries(
+  ALL_MENU_ITEMS.map((item) => [item.id, item.qtyColumn])
+);
+
+/** @deprecated Use ITEM_PRICE_CENTS — kept for receipts migrating from whole-dollar display. */
+export const ITEM_PRICE_DOLLARS: Record<string, number> = Object.fromEntries(
+  ALL_MENU_ITEMS.map((item) => [item.id, item.priceCents / 100])
+);
 
 export type QtyRow = Record<string, number>;
 
 export function emptyQtyColumns(): QtyRow {
   const row: QtyRow = {};
-  for (const itemId of ORDERABLE_ITEM_IDS) {
-    const prefix = ITEM_ID_TO_DB_PREFIX[itemId];
-    for (const suffix of Object.values(CHILI_TO_SUFFIX)) {
-      row[`qty_${prefix}_${suffix}`] = 0;
-    }
+  for (const item of ALL_MENU_ITEMS) {
+    row[item.qtyColumn] = 0;
   }
   return row;
 }
 
-export function aggregateChilisToQtyRow(chilis: Record<string, string[]>): QtyRow {
+export function quantitiesToQtyRow(quantities: Record<string, number>): QtyRow {
   const row = emptyQtyColumns();
-  for (const itemId of ORDERABLE_ITEM_IDS) {
-    const prefix = ITEM_ID_TO_DB_PREFIX[itemId];
-    const list = chilis[itemId] ?? [];
-    for (const name of list) {
-      const suffix = CHILI_TO_SUFFIX[name];
-      if (!suffix) continue;
-      const key = `qty_${prefix}_${suffix}`;
-      row[key] = (row[key] ?? 0) + 1;
-    }
+  for (const item of ALL_MENU_ITEMS) {
+    row[item.qtyColumn] = quantities[item.id] ?? 0;
   }
   return row;
+}
+
+export function calculateOrderTotalCents(quantities: Record<string, number>): number {
+  return ORDERABLE_ITEM_IDS.reduce(
+    (sum, id) => sum + (quantities[id] ?? 0) * (ITEM_PRICE_CENTS[id] ?? 0),
+    0
+  );
+}
+
+export function formatPrice(cents: number): string {
+  const dollars = cents / 100;
+  return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB

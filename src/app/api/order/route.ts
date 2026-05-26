@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendOrderReceiptEmail } from "@/lib/order-receipt-email";
 import { supabase } from "@/lib/supabase";
 import {
-  aggregateChilisToQtyRow,
   ALLOWED_MIME_TYPES,
-  CHILI_NAMES,
-  ITEM_PRICE_DOLLARS,
+  calculateOrderTotalCents,
   MAX_FILE_SIZE,
   ORDERABLE_ITEM_IDS,
+  quantitiesToQtyRow,
   validatePersonal,
 } from "@/lib/orders-schema";
 
@@ -27,48 +26,22 @@ function validateQuantities(data: unknown): data is Record<string, number> {
   return true;
 }
 
-function validateChilis(
-  data: unknown,
-  quantities: Record<string, number>
-): data is Record<string, string[]> {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-
-  for (const id of ORDERABLE_ITEM_IDS) {
-    const raw = d[id];
-    if (!Array.isArray(raw)) return false;
-    const qty = quantities[id] ?? 0;
-    if (raw.length !== qty) return false;
-    for (const entry of raw) {
-      if (typeof entry !== "string" || !CHILI_NAMES.has(entry)) return false;
-    }
-  }
-
-  for (const key of Object.keys(d)) {
-    if (!ORDERABLE_ITEM_IDS.includes(key)) return false;
-  }
-  return true;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const personalRaw = formData.get("personal") as string;
     const quantitiesRaw = formData.get("quantities") as string;
-    const chilisRaw = formData.get("chilis") as string;
     const proof = formData.get("proof") as File | null;
 
-    if (!personalRaw || !quantitiesRaw || !chilisRaw || !proof) {
+    if (!personalRaw || !quantitiesRaw || !proof) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
     let personal: unknown;
     let quantities: unknown;
-    let chilis: unknown;
     try {
       personal = JSON.parse(personalRaw);
       quantities = JSON.parse(quantitiesRaw);
-      chilis = JSON.parse(chilisRaw);
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
@@ -84,10 +57,6 @@ export async function POST(req: NextRequest) {
     const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
     if (totalItems <= 0) {
       return NextResponse.json({ error: "Order must contain at least one item" }, { status: 400 });
-    }
-
-    if (!validateChilis(chilis, quantities)) {
-      return NextResponse.json({ error: "Invalid chili selections" }, { status: 400 });
     }
 
     if (proof.size > MAX_FILE_SIZE) {
@@ -122,19 +91,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const totalPrice = ORDERABLE_ITEM_IDS.reduce(
-      (sum, id) => sum + (quantities[id] ?? 0) * ITEM_PRICE_DOLLARS[id],
-      0
-    );
-
-    const qtyColumns = aggregateChilisToQtyRow(chilis);
+    const totalPriceCents = calculateOrderTotalCents(quantities);
+    const qtyColumns = quantitiesToQtyRow(quantities);
 
     const { error: orderError } = await supabase.from("orders").insert({
       id: orderId,
       customer_name: personal.name.trim(),
       customer_email: personal.email.trim().toLowerCase(),
       customer_phone: personal.phone.trim(),
-      total_price: totalPrice,
+      total_price: totalPriceCents,
       proof_original_filename: originalFilename.slice(0, 512),
       proof_file_path: storagePath,
       paid_rsvp: false,
@@ -150,18 +115,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Must await: serverless runtimes often freeze after the response, killing fire-and-forget work.
-    const mail = await sendOrderReceiptEmail({
+    await sendOrderReceiptEmail({
       kind: "food",
       orderId,
       customerName: personal.name.trim(),
       customerEmail: personal.email.trim().toLowerCase(),
       customerPhone: personal.phone.trim(),
-      totalPrice,
+      totalPriceCents,
       quantities,
-      chilis,
     });
-    return NextResponse.json({ ok: true, order_id: orderId });
+
+    return NextResponse.json({
+      ok: true,
+      order_id: orderId,
+      total_price_cents: totalPriceCents,
+    });
   } catch (e) {
     console.error("Order submission error:", e);
     return NextResponse.json(
