@@ -14,9 +14,11 @@ import {
 } from "@/lib/orders-schema";
 
 const RED = "#D44A3D";
+const RSVP_URL =
+  "https://www.eventbrite.com/e/nibbles-and-nook-20-tickets-1990758404979?aff=oddtdtcreator";
 
 type Language = "id" | "en";
-type Step = "landing" | "personal" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
+type Step = "landing" | "select" | "personal" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
 type MenuPageGroup = { title?: string; items: MenuItemDef[] };
 
 interface PersonalInfo {
@@ -34,7 +36,7 @@ const PICKUP_OPTIONS = [
   { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church", time: "11:30 AM – 12:00 PM" },
 ] as const;
 
-const STEPS: Step[] = ["landing", "personal", "order", "sate", "sambal", "pastries", "payment", "confirmation"];
+const STEPS: Step[] = ["landing", "select", "personal", "order", "sate", "sambal", "pastries", "payment", "confirmation"];
 
 export function OrderFlow() {
   const [step, setStep] = useState<Step>("landing");
@@ -350,11 +352,63 @@ export function OrderFlow() {
           <div className="flex justify-center pt-3 pb-1">
             <button
               type="button"
-              onClick={() => setStep("personal")}
+              onClick={() => setStep("select")}
               className="font-baby-doll px-6 sm:px-8 py-2 rounded-full bg-[#D44A3D] text-[#fff4dd] text-2xl sm:text-[32px] leading-none hover:opacity-95 transition-opacity"
             >
               Next
             </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (step === "select") {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
+        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
+          <div className="flex justify-center mb-2">
+            <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
+          </div>
+          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5 leading-tight">
+            What would you like to do?
+          </h2>
+
+          <div className="flex flex-col gap-3 px-2">
+            <a
+              href={RSVP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight bg-[#D44A3D] text-[#fff4dd]"
+              style={{ borderColor: RED }}
+            >
+              RSVP
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg("");
+                setStep("personal");
+              }}
+              className="font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight text-[#D44A3D] hover:bg-[#D44A3D]/10"
+              style={{ borderColor: RED }}
+            >
+              Preorder
+            </button>
+          </div>
+
+          <div className="relative mt-3">
+            <img src="/rabbit-waiter.png" alt="Waiter" className="w-[40%] max-w-[160px] h-auto object-contain" />
+            <div className="absolute bottom-2 right-0 flex gap-2">
+              <button
+                type="button"
+                onClick={goPrev}
+                className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10"
+                style={{ borderColor: RED }}
+              >
+                Back
+              </button>
+            </div>
           </div>
         </div>
       </main>
