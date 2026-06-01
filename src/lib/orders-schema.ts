@@ -14,23 +14,33 @@ export const MAIN_DISH_ITEMS: MenuItemDef[] = [
   {
     id: "nasi-bakar-ayam-kemangi",
     name: "Nasi Bakar Ayam Kemangi",
-    translated: "Grilled Rice with Basil Chicken",
+    translated: "Grilled Basil Chicken with Rice",
     priceCents: 1300,
     qtyColumn: "qty_nasi_bakar_ayam_kemangi",
   },
   {
     id: "nasi-bakar-cumi",
     name: "Nasi Bakar Cumi",
-    translated: "Grilled Rice with Squid",
+    translated: "Grilled Squid with Rice",
     priceCents: 1400,
     qtyColumn: "qty_nasi_bakar_cumi",
   },
   {
     id: "nasi-bakar-ikan",
     name: "Nasi Bakar Ikan (Tuna)",
-    translated: "Grilled Rice with Tuna",
+    translated: "Grilled Tuna with Rice",
     priceCents: 1300,
     qtyColumn: "qty_nasi_bakar_ikan",
+  },
+];
+
+export const BAKMI_ITEMS: MenuItemDef[] = [
+  {
+    id: "bakmi-no-pork-no-lard",
+    name: "Bakmi (No Pork, No Lard)",
+    translated: "Bakmi (No Pork, No Lard)",
+    priceCents: 1600,
+    qtyColumn: "qty_bakmi_no_pork_no_lard",
   },
 ];
 
@@ -58,6 +68,7 @@ export const SAMBAL_ITEMS: MenuItemDef[] = [
     translated: "Garlic-Shallot Sambal",
     priceCents: 900,
     qtyColumn: "qty_sambel_bawang",
+    portionNote: { id: "110 ml", en: "110 ml" },
   },
   {
     id: "sambel-ijo",
@@ -65,6 +76,7 @@ export const SAMBAL_ITEMS: MenuItemDef[] = [
     translated: "Green Chili Sambal",
     priceCents: 900,
     qtyColumn: "qty_sambel_ijo",
+    portionNote: { id: "110 ml", en: "110 ml" },
   },
   {
     id: "sambel-matah",
@@ -72,6 +84,7 @@ export const SAMBAL_ITEMS: MenuItemDef[] = [
     translated: "Balinese Raw Shallot Sambal",
     priceCents: 900,
     qtyColumn: "qty_sambel_matah",
+    portionNote: { id: "110 ml", en: "110 ml" },
   },
 ];
 
@@ -117,6 +130,7 @@ export const PASTRY_ITEMS: MenuItemDef[] = [
 
 export const ALL_MENU_ITEMS: MenuItemDef[] = [
   ...MAIN_DISH_ITEMS,
+  ...BAKMI_ITEMS,
   ...SATE_ITEMS,
   ...SAMBAL_ITEMS,
   ...PASTRY_ITEMS,

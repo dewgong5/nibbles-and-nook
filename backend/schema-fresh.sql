@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS orders (
     qty_nasi_bakar_ayam_kemangi INTEGER NOT NULL DEFAULT 0,
     qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0,
     qty_nasi_bakar_ikan INTEGER NOT NULL DEFAULT 0,
+    qty_bakmi_no_pork_no_lard INTEGER NOT NULL DEFAULT 0,
 
     -- Sate
     qty_sate_quail_eggs INTEGER NOT NULL DEFAULT 0,

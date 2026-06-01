@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import {
   ALL_MENU_ITEMS,
+  BAKMI_ITEMS,
   calculateOrderTotalCents,
   DEFAULT_RSVP_PRICE_DOLLARS,
   formatPrice,
@@ -17,6 +18,7 @@ const RED = "#D44A3D";
 
 type Language = "id" | "en";
 type Step = "landing" | "personal" | "select" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
+type MenuPageGroup = { title?: string; items: MenuItemDef[] };
 
 interface PersonalInfo {
   name: string;
@@ -37,7 +39,7 @@ const STEPS: Step[] = ["landing", "personal", "select", "order", "sate", "sambal
 
 export function OrderFlow() {
   const [step, setStep] = useState<Step>("landing");
-  const [choice, setChoice] = useState<"rsvp" | "order" | "">("");
+  const [choice, setChoice] = useState<"rsvp" | "order">("order");
   const [language, setLanguage] = useState<Language | null>(null);
   const [personal, setPersonal] = useState<PersonalInfo>({
     name: "",
@@ -61,16 +63,16 @@ export function OrderFlow() {
     language === "en" ? item.translated : item.name;
 
   const mainDishSectionTitle = language === "en" ? "Main dish" : "Hidangan utama";
-  const sateSectionTitle = "Sate";
+  const sateSectionTitle = language === "en" ? "Satay" : "Sate";
   const sambalSectionTitle = language === "en" ? "Extra sambal" : "Sambal tambahan";
   const freeSambalNote =
     language === "en"
-      ? "Every nasi comes with one free sambal."
-      : "Setiap nasi sudah termasuk satu sambal gratis.";
+      ? "Every rice dish comes with one free sambal."
+      : "Setiap hidangan nasi sudah termasuk satu sambal gratis.";
   const extraSambalNote =
     language === "en"
-      ? "Add-on jars — separate from the free sambal included with each nasi."
-      : "Sambal tambahan — terpisah dari sambal gratis setiap nasi.";
+      ? "Add-on jars (110 ml) — separate from the free sambal included with each rice dish."
+      : "Sambal tambahan (110 ml) — terpisah dari sambal gratis yang termasuk di setiap hidangan nasi.";
   const pastriesSectionTitle = language === "en" ? "Pastries" : "Pastry";
 
   const validateStep = useCallback((): string | null => {
@@ -190,12 +192,18 @@ export function OrderFlow() {
   const orderTotalCents = calculateOrderTotalCents(quantities);
 
   const renderQuantityMenuPage = (
-    items: MenuItemDef[],
+    itemsOrGroups: MenuItemDef[] | MenuPageGroup[],
     options: {
       sectionTitle?: string;
       sectionNote?: string;
     } = {}
-  ) => (
+  ) => {
+    const groups =
+      itemsOrGroups.length > 0 && "items" in itemsOrGroups[0]!
+        ? (itemsOrGroups as MenuPageGroup[])
+        : [{ items: itemsOrGroups as MenuItemDef[] }];
+
+    return (
     <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
       <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
         <div className="relative flex justify-center mb-2">
@@ -225,42 +233,51 @@ export function OrderFlow() {
             )}
           </>
         )}
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">
-                  {language ? `${getItemLabel(item)}:` : item.name}
-                </p>
-                <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">
-                  ({formatPrice(item.priceCents)}
-                  {item.portionNote && language
-                    ? ` / ${language === "en" ? item.portionNote.en : item.portionNote.id}`
-                    : item.portionNote
-                      ? ` / ${item.portionNote.en}`
-                      : ""}
-                  )
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1 pt-1">
-                <button
-                  type="button"
-                  onClick={() => removeQuantity(item.id)}
-                  className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
-                >
-                  −
-                </button>
-                <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold flex items-center justify-center">
-                  {quantities[item.id] ?? 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => addQuantity(item.id)}
-                  className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
-                >
-                  +
-                </button>
-              </div>
+        <div className="space-y-5">
+          {groups.map((group, groupIndex) => (
+            <div key={group.title ?? groupIndex} className="space-y-4">
+              {group.title && (
+                <h4 className="font-baby-doll text-[#D44A3D] text-base sm:text-lg font-bold">
+                  {group.title}
+                </h4>
+              )}
+              {group.items.map((item) => (
+                <div key={item.id} className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="font-baby-doll text-[#D44A3D] text-lg sm:text-xl font-bold leading-tight">
+                      {language ? `${getItemLabel(item)}:` : item.name}
+                    </p>
+                    <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg">
+                      ({formatPrice(item.priceCents)}
+                      {item.portionNote && language
+                        ? ` / ${language === "en" ? item.portionNote.en : item.portionNote.id}`
+                        : item.portionNote
+                          ? ` / ${item.portionNote.en}`
+                          : ""}
+                      )
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => removeQuantity(item.id)}
+                      className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
+                    >
+                      −
+                    </button>
+                    <span className="w-10 h-9 rounded-xl bg-[#D44A3D] text-white font-bold flex items-center justify-center">
+                      {quantities[item.id] ?? 0}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addQuantity(item.id)}
+                      className="w-9 h-9 rounded-xl bg-[#D44A3D] text-white font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -315,7 +332,7 @@ export function OrderFlow() {
                 className="rounded-2xl border-2 px-4 py-3 font-baby-doll text-lg text-[#D44A3D]"
                 style={{ borderColor: RED }}
               >
-                Indonesia
+                Indonesian
               </button>
             </div>
           </div>
@@ -324,6 +341,7 @@ export function OrderFlow() {
 
     </main>
   );
+  };
 
   if (step === "landing") {
     return (
@@ -341,15 +359,12 @@ export function OrderFlow() {
           <div className="relative px-1 sm:px-2 pb-2">
             <div className="rounded-3xl bg-[#D44A3D] px-3 sm:px-4 py-3 text-[#fff4dd] mr-[40%] sm:mr-[165px]">
               <h2 className="font-baby-doll text-base sm:text-lg leading-none mb-1.5">
-                For our next event, Nibbles and Nook is doing a pop-up!
+                For our next event, Nibbles and Nook 2.0 is doing a pop-up!
               </h2>
               <ul className="font-baby-doll text-sm sm:text-base leading-[1.2] tracking-tight space-y-0.5">
-                <li>Time: April 11th, 4-9 PM</li>
-                <li>Location: 6537 Telford Avenue</li>
+                <li>Time: 27 June, 10 AM - 4 PM</li>
+                <li>Location: 1587 Frances St</li>
               </ul>
-              <p className="mt-1.5 font-baby-doll text-xs sm:text-sm leading-snug opacity-95">
-                Note: If you pre-order, you won&apos;t need to pay the RSVP fee!
-              </p>
             </div>
             <img src="/camera-girl.png" alt="Camera girl decoration" className="absolute right-0 bottom-0 w-[45%] sm:w-[200px] h-auto object-contain" />
           </div>
@@ -433,22 +448,10 @@ export function OrderFlow() {
             <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
           </div>
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5 leading-tight">
-            Which option do you prefer, {personal.name || "there"}?
+            Ready to order, {personal.name || "there"}?
           </h2>
           
           <div className="flex flex-col gap-3 px-2">
-            <button
-              type="button"
-              onClick={() => { setChoice("rsvp"); setErrorMsg(""); }}
-              className={`font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight ${
-                choice === "rsvp" 
-                  ? "bg-[#D44A3D] text-[#fff4dd]" 
-                  : "bg-transparent text-[#D44A3D] opacity-60 hover:opacity-100"
-              }`}
-              style={{ borderColor: RED }}
-            >
-              RSVP for the event!
-            </button>
             <button
               type="button"
               onClick={() => { setChoice("order"); setErrorMsg(""); }}
@@ -459,7 +462,7 @@ export function OrderFlow() {
               }`}
               style={{ borderColor: RED }}
             >
-              Order food & RSVP for the event!
+              Order food for the event!
             </button>
           </div>
           
@@ -495,7 +498,10 @@ export function OrderFlow() {
   }
 
   if (step === "order") {
-    return renderQuantityMenuPage(MAIN_DISH_ITEMS, {
+    return renderQuantityMenuPage([
+      { title: "Nasi Bakar", items: MAIN_DISH_ITEMS },
+      { title: "Bakmi", items: BAKMI_ITEMS },
+    ], {
       sectionTitle: language ? mainDishSectionTitle : undefined,
       sectionNote: language ? freeSambalNote : undefined,
     });
@@ -672,12 +678,9 @@ export function OrderFlow() {
           <div className="pt-2 mt-3 border-t border-[#D44A3D]/25 mb-1">
             <p>
               <span className="font-bold block mb-0.5">Pop-up Location:</span>
-              Place: 6537 Telford Avenue
+              Place: 1587 Frances St
               <br />
-              Time: April 11th, 4–9 PM
-            </p>
-            <p className="mt-2 text-xs sm:text-sm opacity-90 leading-snug">
-              Note: If you pre-order, you won&apos;t need to pay the RSVP fee!
+              Time: 27 June, 10 AM - 4 PM
             </p>
           </div>
           <img

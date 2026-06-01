@@ -15,8 +15,8 @@ import {
 const RECEIPT_EMAIL_FONT_FAMILY =
   "'Baby Doll','Trebuchet MS','Segoe UI',system-ui,sans-serif";
 
-const POPUP_ADDRESS = "6537 Telford Avenue";
-const POPUP_DATE_TIME = "April 11th, 4–9 PM";
+const POPUP_ADDRESS = "1587 Frances St";
+const POPUP_DATE_TIME = "27 June, 10 AM - 4 PM";
 
 const ITEM_LABELS: Record<string, string> = Object.fromEntries(
   ALL_MENU_ITEMS.map((item) => [item.id, item.name])

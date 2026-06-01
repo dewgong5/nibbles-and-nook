@@ -18,13 +18,14 @@ COMMENT ON COLUMN orders.paid_rsvp IS
 -- Server: set RSVP_PRICE_DOLLARS in .env to match the fee shown in the app (see DEFAULT_RSVP_PRICE_DOLLARS in src/lib/orders-schema.ts).
 
 -- ============================================================
--- Pop-up quantity columns (3 dishes)
+-- Pop-up quantity columns
 -- Names must match src/lib/orders-schema.ts
 -- ============================================================
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ayam_kemangi INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ikan INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_bakmi_no_pork_no_lard INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_sate_quail_eggs INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_sate_kulit INTEGER NOT NULL DEFAULT 0;

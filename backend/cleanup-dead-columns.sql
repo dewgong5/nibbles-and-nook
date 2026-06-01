@@ -40,7 +40,7 @@ ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_rendang_and_cendol;
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_ulam_betawi;
 
 -- -----------------------------------------------------------------------------
--- Verify: should match orders-schema.ts (13 qty columns)
+-- Verify: should match orders-schema.ts (14 qty columns)
 -- -----------------------------------------------------------------------------
 SELECT column_name
 FROM information_schema.columns
