@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS orders (
     qty_sambel_matah INTEGER NOT NULL DEFAULT 0,
 
     -- Pastries
-    qty_klepon INTEGER NOT NULL DEFAULT 0,
     qty_nama_donut_earl_grey INTEGER NOT NULL DEFAULT 0,
     qty_nama_donut_mocha_nougat INTEGER NOT NULL DEFAULT 0,
     qty_nama_donut_mango_pomelo_sago INTEGER NOT NULL DEFAULT 0,

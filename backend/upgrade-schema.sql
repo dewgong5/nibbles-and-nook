@@ -49,7 +49,6 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_sambel_matah INTEGER NOT NULL DE
 -- -----------------------------------------------------------------------------
 -- Pastries
 -- -----------------------------------------------------------------------------
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_klepon INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nama_donut_earl_grey INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nama_donut_mocha_nougat INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nama_donut_mango_pomelo_sago INTEGER NOT NULL DEFAULT 0;

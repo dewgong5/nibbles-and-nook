@@ -5,7 +5,6 @@ import {
   ALL_MENU_ITEMS,
   BAKMI_ITEMS,
   calculateOrderTotalCents,
-  DEFAULT_RSVP_PRICE_DOLLARS,
   formatPrice,
   MAIN_DISH_ITEMS,
   type MenuItemDef,
@@ -17,7 +16,7 @@ import {
 const RED = "#D44A3D";
 
 type Language = "id" | "en";
-type Step = "landing" | "personal" | "select" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
+type Step = "landing" | "personal" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
 type MenuPageGroup = { title?: string; items: MenuItemDef[] };
 
 interface PersonalInfo {
@@ -35,11 +34,10 @@ const PICKUP_OPTIONS = [
   { id: "minggu-iec", label: "Sunday, 8th March — Indonesian Evangelical Church", time: "11:30 AM – 12:00 PM" },
 ] as const;
 
-const STEPS: Step[] = ["landing", "personal", "select", "order", "sate", "sambal", "pastries", "payment", "confirmation"];
+const STEPS: Step[] = ["landing", "personal", "order", "sate", "sambal", "pastries", "payment", "confirmation"];
 
 export function OrderFlow() {
   const [step, setStep] = useState<Step>("landing");
-  const [choice, setChoice] = useState<"rsvp" | "order">("order");
   const [language, setLanguage] = useState<Language | null>(null);
   const [personal, setPersonal] = useState<PersonalInfo>({
     name: "",
@@ -83,10 +81,7 @@ export function OrderFlow() {
       if (!EMAIL_REGEX.test(personal.email)) return "Please enter a valid email address.";
       if (!personal.phone.trim()) return "Please enter your phone number.";
     }
-    if (step === "select") {
-      if (!choice) return "Please select an option to continue.";
-    }
-    if (step === "payment" && choice === "order") {
+    if (step === "payment") {
       const total = Object.values(quantities).reduce((a, b) => a + b, 0);
       if (total <= 0) return "Please add at least one item to your order.";
     }
@@ -98,7 +93,7 @@ export function OrderFlow() {
       if (paymentFile.size > MAX_FILE_SIZE) return "File is too large (max 10 MB).";
     }
     return null;
-  }, [step, personal, choice, quantities, pickup, paymentFile]);
+  }, [step, personal, quantities, pickup, paymentFile]);
 
   const goNext = useCallback(async () => {
     const err = validateStep();
@@ -108,15 +103,6 @@ export function OrderFlow() {
     }
     setErrorMsg("");
 
-    if (step === "select") {
-      if (choice === "rsvp") {
-        setStep("payment");
-        return;
-      }
-      setStep("order");
-      return;
-    }
-
     if (step === "payment") {
       if (!paymentFile) return;
       setSubmitting(true);
@@ -124,12 +110,9 @@ export function OrderFlow() {
         const form = new FormData();
         form.append("personal", JSON.stringify({ ...personal }));
         form.append("proof", paymentFile);
-        const url = choice === "rsvp" ? "/api/rsvp" : "/api/order";
-        if (choice === "order") {
-          form.append("quantities", JSON.stringify({ ...quantities }));
-          form.append("pickup", pickup);
-        }
-        const res = await fetch(url, {
+        form.append("quantities", JSON.stringify({ ...quantities }));
+        form.append("pickup", pickup);
+        const res = await fetch("/api/order", {
           method: "POST",
           body: form,
         });
@@ -149,12 +132,12 @@ export function OrderFlow() {
 
     const i = STEPS.indexOf(step);
     if (i < STEPS.length - 1) setStep(STEPS[i + 1]!);
-  }, [step, personal, choice, quantities, pickup, paymentFile, validateStep]);
+  }, [step, personal, quantities, pickup, paymentFile, validateStep]);
 
   const goPrev = useCallback(() => {
     setErrorMsg("");
     if (step === "order") {
-      setStep("select");
+      setStep("personal");
       return;
     }
     if (step === "sate") {
@@ -169,17 +152,13 @@ export function OrderFlow() {
       setStep("sambal");
       return;
     }
-    if (step === "payment" && choice === "rsvp") {
-      setStep("select");
-      return;
-    }
-    if (step === "payment" && choice === "order") {
+    if (step === "payment") {
       setStep("pastries");
       return;
     }
     const i = STEPS.indexOf(step);
     if (i > 0) setStep(STEPS[i - 1]!);
-  }, [step, choice]);
+  }, [step]);
 
   const addQuantity = useCallback((id: string) => {
     setQuantities((q) => ({ ...q, [id]: (q[id] ?? 0) + 1 }));
@@ -440,66 +419,9 @@ export function OrderFlow() {
     );
   }
 
-  if (step === "select") {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-8">
-        <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4">
-          <div className="flex justify-center mb-2">
-            <img src="/logo-nnn.png" alt="Nibbles & nOOk" className="w-[45%] max-w-[180px] h-auto object-contain" />
-          </div>
-          <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5 leading-tight">
-            Ready to order, {personal.name || "there"}?
-          </h2>
-          
-          <div className="flex flex-col gap-3 px-2">
-            <button
-              type="button"
-              onClick={() => { setChoice("order"); setErrorMsg(""); }}
-              className={`font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight ${
-                choice === "order" 
-                  ? "bg-[#D44A3D] text-[#fff4dd]" 
-                  : "bg-transparent text-[#D44A3D] opacity-60 hover:opacity-100"
-              }`}
-              style={{ borderColor: RED }}
-            >
-              Order food for the event!
-            </button>
-          </div>
-          
-          {errorMsg && (
-            <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">
-              {errorMsg}
-            </p>
-          )}
-
-          <div className="relative mt-3">
-            <img src="/rabbit-waiter.png" alt="Waiter" className="w-[40%] max-w-[160px] h-auto object-contain" />
-            <div className="absolute bottom-2 right-0 flex gap-2">
-              <button 
-                type="button" 
-                onClick={goPrev} 
-                className="font-baby-doll px-5 py-1.5 rounded-full border-2 text-[#D44A3D] text-lg hover:bg-[#D44A3D]/10" 
-                style={{ borderColor: RED }}
-              >
-                Back
-              </button>
-              <button 
-                type="button" 
-                onClick={goNext} 
-                className="font-baby-doll px-5 py-1.5 rounded-full bg-[#D44A3D] text-[#fff4dd] text-lg hover:opacity-95 transition-opacity"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   if (step === "order") {
     return renderQuantityMenuPage([
-      { title: "Nasi Bakar", items: MAIN_DISH_ITEMS },
+      { title: language === "en" ? "Grilled Rice" : "Nasi Bakar", items: MAIN_DISH_ITEMS },
       { title: "Bakmi", items: BAKMI_ITEMS },
     ], {
       sectionTitle: language ? mainDishSectionTitle : undefined,
@@ -567,21 +489,9 @@ export function OrderFlow() {
           <h2 className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-5">
             Please attach proof of payment here! For etransfers, send to joachimkenneth@wealthsimple.me
           </h2>
-          {choice === "order" && (
-            <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-4">
-              Total: {formatPrice(orderTotalCents)}
-            </p>
-          )}
-          {choice === "rsvp" && (
-            <div className="mb-4 text-center space-y-2">
-              <h3 className="font-baby-doll italic underline text-[#D44A3D] text-base sm:text-lg leading-snug px-1">
-                To reserve, there is a $5 redeemable deposit (for attendee commitment) which can be credited upon event attendance!
-              </h3>
-              <p className="font-baby-doll text-[#D44A3D] text-lg">
-                Redeemable RSVP deposit: ${DEFAULT_RSVP_PRICE_DOLLARS}
-              </p>
-            </div>
-          )}
+          <p className="font-baby-doll text-[#D44A3D] text-xl sm:text-2xl font-bold text-center mb-4">
+            Total: {formatPrice(orderTotalCents)}
+          </p>
           <input
             ref={fileInputRef}
             type="file"
@@ -608,22 +518,12 @@ export function OrderFlow() {
             )}
           </div>
           <div className="mt-4 px-1">
-            {choice === "rsvp" ? (
-              <>
-                <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
-                  Don&apos;t forget to mention it&apos;s for RSVP in the e-transfer note. Ex: {"Nathan"} — RSVP (${DEFAULT_RSVP_PRICE_DOLLARS})
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
-                  Don&apos;t forget to insert note of the food.
-                </p>
-                <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
-                  Ex: {"Nathan"} — Nasi Kulit Ayam (1), Nasi Ayam Geprek (2)
-                </p>
-              </>
-            )}
+            <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
+              Don&apos;t forget to insert note of the food.
+            </p>
+            <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
+              Ex: {"Nathan"} — Nasi Bakar Ayam Kemangi (1), Bakmi (1)
+            </p>
           </div>
           {errorMsg && (
             <p className="font-baby-doll text-[#D44A3D] text-sm bg-[#D44A3D]/10 rounded-xl px-4 py-2 mt-3 text-center">{errorMsg}</p>
@@ -656,7 +556,7 @@ export function OrderFlow() {
       <div className="w-full max-w-md bg-[var(--cream)] rounded-2xl shadow-lg overflow-hidden border border-[#e8dcc8] px-4 sm:px-6 pt-5 pb-4 text-center">
         <img src="/logo-nnn.png" alt="Logo" className="block w-[45%] mx-auto mb-2" />
         <h2 className="font-baby-doll text-[#D44A3D] text-2xl font-bold mb-5">
-          {choice === "rsvp" ? "Thank you — you're RSVPed!" : "Thank you for your order!"}
+          Thank you for your order!
         </h2>
         <div className="font-baby-doll text-[#D44A3D] text-base leading-snug px-1">
           <div className="space-y-3">

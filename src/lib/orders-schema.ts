@@ -14,21 +14,21 @@ export const MAIN_DISH_ITEMS: MenuItemDef[] = [
   {
     id: "nasi-bakar-ayam-kemangi",
     name: "Nasi Bakar Ayam Kemangi",
-    translated: "Grilled Basil Chicken with Rice",
+    translated: "Grilled Rice with Basil Chicken",
     priceCents: 1300,
     qtyColumn: "qty_nasi_bakar_ayam_kemangi",
   },
   {
     id: "nasi-bakar-cumi",
     name: "Nasi Bakar Cumi",
-    translated: "Grilled Squid with Rice",
+    translated: "Grilled Rice with Squid",
     priceCents: 1400,
     qtyColumn: "qty_nasi_bakar_cumi",
   },
   {
     id: "nasi-bakar-ikan",
     name: "Nasi Bakar Ikan (Tuna)",
-    translated: "Grilled Tuna with Rice",
+    translated: "Grilled Rice with Tuna",
     priceCents: 1300,
     qtyColumn: "qty_nasi_bakar_ikan",
   },
@@ -89,14 +89,6 @@ export const SAMBAL_ITEMS: MenuItemDef[] = [
 ];
 
 export const PASTRY_ITEMS: MenuItemDef[] = [
-  {
-    id: "klepon",
-    name: "Klepon",
-    translated: "Klepon",
-    priceCents: 450,
-    qtyColumn: "qty_klepon",
-    portionNote: { id: "4 potong", en: "4 pieces" },
-  },
   {
     id: "nama-donut-earl-grey",
     name: "Donut Earl Grey",
