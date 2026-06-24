@@ -31,7 +31,6 @@ COMMENT ON COLUMN orders.total_price IS
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ayam_kemangi INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_cumi INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_nasi_bakar_ikan INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS qty_bakmi_no_pork_no_lard INTEGER NOT NULL DEFAULT 0;
 
 -- -----------------------------------------------------------------------------
 -- Sate

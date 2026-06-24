@@ -34,16 +34,6 @@ export const MAIN_DISH_ITEMS: MenuItemDef[] = [
   },
 ];
 
-export const BAKMI_ITEMS: MenuItemDef[] = [
-  {
-    id: "bakmi-no-pork-no-lard",
-    name: "Bakmi (Mengandung Pork)",
-    translated: "Bakmi (Contains Pork)",
-    priceCents: 1800,
-    qtyColumn: "qty_bakmi_no_pork_no_lard",
-  },
-];
-
 export const SATE_ITEMS: MenuItemDef[] = [
   {
     id: "sate-quail-eggs",
@@ -122,7 +112,6 @@ export const PASTRY_ITEMS: MenuItemDef[] = [
 
 export const ALL_MENU_ITEMS: MenuItemDef[] = [
   ...MAIN_DISH_ITEMS,
-  ...BAKMI_ITEMS,
   ...SATE_ITEMS,
   ...SAMBAL_ITEMS,
   ...PASTRY_ITEMS,

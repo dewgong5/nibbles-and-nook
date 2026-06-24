@@ -30,6 +30,9 @@ ALTER TABLE orders DROP COLUMN IF EXISTS qty_butter_tteok_cream_original;
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_butter_tteok_cream_matcha;
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_butter_tteok_cream_chocolate;
 
+-- Bakmi (removed from order flow)
+ALTER TABLE orders DROP COLUMN IF EXISTS qty_bakmi_no_pork_no_lard;
+
 -- Earlier pop-up menus (superseded by current nasi bakar / pastries)
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_ayam;
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_bakar_rendang;
@@ -41,7 +44,7 @@ ALTER TABLE orders DROP COLUMN IF EXISTS qty_nasi_ulam_betawi;
 ALTER TABLE orders DROP COLUMN IF EXISTS qty_klepon;
 
 -- -----------------------------------------------------------------------------
--- Verify: should match orders-schema.ts (13 qty columns)
+-- Verify: should match orders-schema.ts (12 qty columns)
 -- -----------------------------------------------------------------------------
 SELECT column_name
 FROM information_schema.columns

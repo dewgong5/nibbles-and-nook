@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import {
   ALL_MENU_ITEMS,
-  BAKMI_ITEMS,
   calculateOrderTotalCents,
   formatPrice,
   MAIN_DISH_ITEMS,
@@ -476,7 +475,6 @@ export function OrderFlow() {
   if (step === "order") {
     return renderQuantityMenuPage([
       { title: language === "en" ? "Grilled Rice" : "Nasi Bakar", items: MAIN_DISH_ITEMS },
-      { title: "Bakmi", items: BAKMI_ITEMS },
     ], {
       sectionTitle: language ? mainDishSectionTitle : undefined,
       sectionNote: language ? freeSambalNote : undefined,
@@ -576,7 +574,7 @@ export function OrderFlow() {
               Don&apos;t forget to insert note of the food.
             </p>
             <p className="font-baby-doll text-[#D44A3D] text-base sm:text-lg leading-snug">
-              Ex: {"Nathan"} — Nasi Bakar Ayam Kemangi (1), Bakmi (1)
+              Ex: {"Nathan"} — Nasi Bakar Ayam Kemangi (1), Sate Kulit (1)
             </p>
           </div>
           {errorMsg && (
