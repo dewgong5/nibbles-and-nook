@@ -15,6 +15,7 @@ import {
 const RED = "#D44A3D";
 const RSVP_URL =
   "https://www.eventbrite.com/e/nibbles-and-nook-20-tickets-1990758404979?aff=oddtdtcreator";
+const PREORDER_OPEN = false;
 
 type Language = "id" | "en";
 type Step = "landing" | "select" | "personal" | "order" | "sate" | "sambal" | "pastries" | "payment" | "confirmation";
@@ -385,14 +386,18 @@ export function OrderFlow() {
             </a>
             <button
               type="button"
+              disabled={!PREORDER_OPEN}
               onClick={() => {
                 setErrorMsg("");
                 setStep("personal");
               }}
-              className="font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight text-[#D44A3D] hover:bg-[#D44A3D]/10"
+              className="font-baby-doll px-4 py-3 rounded-full border-2 text-lg transition-all text-center leading-tight text-[#D44A3D] hover:bg-[#D44A3D]/10 disabled:hover:bg-transparent disabled:cursor-not-allowed"
               style={{ borderColor: RED }}
             >
               Preorder
+              {!PREORDER_OPEN && (
+                <span className="ml-2 text-xs font-normal">Closed</span>
+              )}
             </button>
           </div>
 
